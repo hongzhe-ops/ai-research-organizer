@@ -1,5 +1,6 @@
 import { Check, FileText, Globe, MessageSquareQuote, Pencil, Signature, Type, X } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
+import { useT } from '../store'
 import type { Origin, SourceType, Status } from '../types'
 
 export const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(' ')
@@ -10,11 +11,12 @@ export function cardClass(status: Status) {
 }
 
 export function StatusChip({ status, origin }: { status: Status; origin?: Origin }) {
+  const t = useT().status
   const map: Record<Status, { label: string; cls: string; icon: ReactNode }> = {
-    suggested: { label: 'AI draft', cls: 'border border-dashed border-graphite/60 text-graphite bg-white', icon: <Pencil size={12} /> },
-    confirmed: { label: origin === 'researcher' ? 'Added by you' : 'Confirmed', cls: 'bg-ink text-white', icon: <Check size={12} /> },
-    edited: { label: 'Edited by you', cls: 'bg-ink-soft text-ink', icon: <Signature size={12} /> },
-    rejected: { label: 'Rejected', cls: 'bg-graphite-soft text-muted line-through', icon: <X size={12} /> },
+    suggested: { label: t.suggested, cls: 'border border-dashed border-graphite/60 text-graphite bg-white', icon: <Pencil size={12} /> },
+    confirmed: { label: origin === 'researcher' ? t.added : t.confirmed, cls: 'bg-ink text-white', icon: <Check size={12} /> },
+    edited: { label: t.edited, cls: 'bg-ink-soft text-ink', icon: <Signature size={12} /> },
+    rejected: { label: t.rejected, cls: 'bg-graphite-soft text-muted line-through', icon: <X size={12} /> },
   }
   const m = map[status]
   return (
@@ -51,6 +53,7 @@ export function Button({ variant = 'outline', size = 'md', className, ...p }: Bt
 }
 
 export function Dialog({ title, onClose, children, width = 560 }: { title: string; onClose: () => void; children: ReactNode; width?: number }) {
+  const t = useT()
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', k)
@@ -61,7 +64,7 @@ export function Dialog({ title, onClose, children, width = 560 }: { title: strin
       <div role="dialog" aria-modal="true" aria-label={title} className="w-full rounded-xl bg-white shadow-[0_12px_40px_rgba(20,30,60,.18)]" style={{ maxWidth: width }} onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
           <h2 className="text-[15px] font-semibold">{title}</h2>
-          <button aria-label="Close" onClick={onClose} className="rounded p-1 text-muted hover:bg-graphite-soft"><X size={16} /></button>
+          <button aria-label={t.common.close} onClick={onClose} className="rounded p-1 text-muted hover:bg-graphite-soft"><X size={16} /></button>
         </div>
         <div className="p-5">{children}</div>
       </div>

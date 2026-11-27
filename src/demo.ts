@@ -1,3 +1,5 @@
+import { evZh, extraEvZh, insightsZh, logZh, metaZh, sourcesZh, themesZh } from './demo-zh.ts'
+import type { Lang } from './i18n'
 import type { Evidence, Insight, LogEntry, Project, Source, Theme } from './types'
 
 /*
@@ -155,7 +157,14 @@ const log: LogEntry[] = [
   { id: 'l9', at: T0 + 2 * DAY + 1_800_000, actor: 'researcher', text: 'Rejected insight: "Clients prefer giving feedback directly in Figma." Reason: Contradicted by two of three mentions.', target: { kind: 'insight', id: 'i5' } },
 ]
 
-export function demoProject(): Project {
+function zhProject(): Project {
+  const evidence: Evidence[] = evZh.map(([id, sourceId, quote, status, rationale, note]) => ({ id, sourceId, quote, status, rationale, note, origin: 'ai' }))
+  evidence.push({ id: 'e25', sourceId: 's3', quote: extraEvZh.quote, status: 'confirmed', origin: 'researcher', note: extraEvZh.note })
+  return { ...metaZh, isDemo: true, sources: sourcesZh, evidence, themes: themesZh, insights: insightsZh, log: [...logZh].reverse() }
+}
+
+export function demoProject(lang: Lang = 'en'): Project {
+  if (lang === 'zh') return structuredClone(zhProject())
   return structuredClone({
     name: 'Freelance designers and client feedback',
     question: 'How do freelance designers collect, interpret and act on client feedback?',
@@ -164,6 +173,6 @@ export function demoProject(): Project {
   })
 }
 
-export function emptyProject(): Project {
-  return { name: 'Untitled study', question: '', isDemo: false, sources: [], evidence: [], themes: [], insights: [], log: [] }
+export function emptyProject(lang: Lang = 'en'): Project {
+  return { name: lang === 'zh' ? '未命名研究' : 'Untitled study', question: '', isDemo: false, sources: [], evidence: [], themes: [], insights: [], log: [] }
 }

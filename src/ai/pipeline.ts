@@ -1,9 +1,10 @@
 import { locate } from '../lib/text'
-import { uid } from '../store'
+import { getT, uid } from '../store'
 import type { Evidence, Insight, Project, Settings, Source, Theme } from '../types'
 import { complete, parseJSON } from './llm'
 
 const MAX_SOURCE_CHARS = 40_000
+const langRule = () => `\nWrite every rationale, name, description and statement in ${getT().ai.outLang}. Quotes must stay exactly as written in the source, in its original language.`
 
 /* ---------- 1. Evidence extraction ---------- */
 
@@ -22,7 +23,7 @@ ${source.content.slice(0, MAX_SOURCE_CHARS)}
 </source>
 
 Extract 4 to 12 evidence quotes.`
-  const raw = parseJSON<Array<{ quote: string; rationale?: string }>>(await complete(settings, EXTRACT_SYSTEM, user))
+  const raw = parseJSON<Array<{ quote: string; rationale?: string }>>(await complete(settings, EXTRACT_SYSTEM + langRule(), user))
   const existing = new Set(project.evidence.filter((e) => e.sourceId === source.id).map((e) => e.quote))
   const kept: Evidence[] = []
   let discarded = 0
@@ -63,7 +64,7 @@ ${ev.map((e) => `- ${e.id}: "${e.quote}"`).join('\n')}
 
 Propose new themes for the evidence that is not covered by fixed themes.`
   const raw = parseJSON<{ fixed?: Array<{ id: string; add?: string[] }>; new?: Array<{ name: string; description?: string; evidenceIds?: string[] }> }>(
-    await complete(settings, CLUSTER_SYSTEM, user),
+    await complete(settings, CLUSTER_SYSTEM + langRule(), user),
   )
   const valid = new Set(ev.map((e) => e.id))
   const keep = (ids?: string[]) => [...new Set((ids || []).filter((x) => valid.has(x)))]
@@ -112,7 +113,7 @@ ${kept.map((i) => `- ${i.statement}`).join('\n') || 'none'}
 
 Draft 3 to 6 new insights.`
   const raw = parseJSON<Array<{ statement: string; themeIds?: string[]; supporting?: string[]; counter?: string[] }>>(
-    await complete(settings, INSIGHT_SYSTEM, user),
+    await complete(settings, INSIGHT_SYSTEM + langRule(), user),
   )
   const validE = new Set(ev.map((e) => e.id))
   const validT = new Set(themes.map((t) => t.id))

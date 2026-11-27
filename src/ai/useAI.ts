@@ -1,15 +1,13 @@
-import { useStore } from '../store'
+import { getT, useStore } from '../store'
 import { LLMError } from './llm'
 import { clusterThemes, extractEvidence, synthesizeInsights } from './pipeline'
 
-const msg = (e: unknown) => (e instanceof LLMError ? e.message : 'Something went wrong while running the AI. Try again.')
+const msg = (e: unknown) => (e instanceof LLMError ? e.message : getT().ai.failed)
 
 function guard(onNeedKey: () => void) {
   const s = useStore.getState()
   if (!s.settings.apiKey) {
-    s.notify(s.project.isDemo
-      ? 'The demo study already contains AI results. Connect your own API key to analyse new material.'
-      : 'Connect an API key to run AI analysis. You can still add evidence by selecting text in a source.', 'error')
+    s.notify(s.project.isDemo ? getT().ai.needKeyDemo : getT().ai.needKey, 'error')
     onNeedKey()
     return false
   }
@@ -20,12 +18,12 @@ export async function runExtract(sourceId: string) {
   const s = useStore.getState()
   const source = s.project.sources.find((x) => x.id === sourceId)
   if (!source) return 0
-  s.setBusy(`Reading ${source.title}…`)
+  s.setBusy(getT().ai.reading(source.title))
   try {
     const { kept, discarded } = await extractEvidence(s.settings, useStore.getState().project, source)
     const st = useStore.getState()
     st.replaceAI({ evidence: [...st.project.evidence, ...kept] })
-    st.log('ai', `Extracted ${kept.length} quotes from "${source.title}".${discarded ? ` ${discarded} proposed ${discarded === 1 ? 'quote was' : 'quotes were'} discarded because ${discarded === 1 ? 'it' : 'they'} did not match the source text.` : ''}`, { kind: 'source', id: source.id })
+    st.log('ai', getT().log.extracted(kept.length, source.title, discarded), { kind: 'source', id: source.id })
     return kept.length
   } finally {
     useStore.getState().setBusy()
@@ -34,12 +32,12 @@ export async function runExtract(sourceId: string) {
 
 export async function runCluster() {
   const s = useStore.getState()
-  s.setBusy('Grouping evidence…')
+  s.setBusy(getT().ai.grouping)
   try {
     const r = await clusterThemes(s.settings, s.project)
     const st = useStore.getState()
     st.replaceAI({ themes: r.themes })
-    st.log('ai', `Proposed ${r.added} new themes. ${r.kept} themes you had confirmed, edited or locked were kept as they were.`)
+    st.log('ai', getT().log.clustered(r.added, r.kept))
   } finally {
     useStore.getState().setBusy()
   }
@@ -47,12 +45,12 @@ export async function runCluster() {
 
 export async function runInsights() {
   const s = useStore.getState()
-  s.setBusy('Drafting insights…')
+  s.setBusy(getT().ai.drafting)
   try {
     const r = await synthesizeInsights(s.settings, s.project)
     const st = useStore.getState()
     st.replaceAI({ insights: r.insights })
-    st.log('ai', `Drafted ${r.added} insights with supporting and counter evidence.`)
+    st.log('ai', getT().log.synthesized(r.added))
   } finally {
     useStore.getState().setBusy()
   }
@@ -77,9 +75,9 @@ export function useRunAll(onNeedKey: () => void) {
     const p = useStore.getState().project
     const fresh = p.sources.filter((s) => !p.evidence.some((e) => e.sourceId === s.id))
     for (const s of fresh) await runExtract(s.id)
-    if (!useStore.getState().project.evidence.length) throw new LLMError('Import at least one source before running the analysis.')
+    if (!useStore.getState().project.evidence.length) throw new LLMError(getT().ai.noSources)
     await runCluster()
     await runInsights()
     useStore.getState().go({ view: 'evidence' })
-  }, 'Analysis finished. New AI drafts are marked in pencil, ready for your review.')
+  }, getT().ai.allDone)
 }

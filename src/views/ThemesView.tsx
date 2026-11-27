@@ -3,13 +3,15 @@ import { useState } from 'react'
 import { runCluster, useAIAction } from '../ai/useAI'
 import { EvidenceCard } from '../components/EvidenceCard'
 import { Button, Empty, PageHeader, StatusChip, cardClass, cx, inputCls } from '../components/ui'
-import { coverage, useStore } from '../store'
+import { coverage, useStore, useT } from '../store'
 import type { Evidence, Theme } from '../types'
 
 type Drag = { eid: string; from: string | null }
 
 function Column({ theme, items, drag, setDrag }: { theme: Theme | null; items: Evidence[]; drag: Drag | null; setDrag: (d: Drag | null) => void }) {
   const { project: p, moveEvidence, updateTheme, setThemeStatus, toggleLock, deleteTheme } = useStore()
+  const T = useT()
+  const t = T.themes
   const [over, setOver] = useState(false)
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(theme?.name || '')
@@ -19,7 +21,7 @@ function Column({ theme, items, drag, setDrag }: { theme: Theme | null; items: E
 
   return (
     <section
-      aria-label={theme ? theme.name : 'Unsorted quotes'}
+      aria-label={theme ? theme.name : t.unsortedLabel}
       onDragOver={(e) => { if (drag && drag.from !== id && !locked) { e.preventDefault(); setOver(true) } }}
       onDragLeave={() => setOver(false)}
       onDrop={() => { setOver(false); if (drag && !locked) moveEvidence(drag.eid, drag.from, id); setDrag(null) }}
@@ -30,12 +32,12 @@ function Column({ theme, items, drag, setDrag }: { theme: Theme | null; items: E
           <>
             <div className="mb-2 flex items-center gap-1.5">
               <StatusChip status={theme.status} origin={theme.origin} />
-              {locked && <span className="inline-flex items-center gap-1 text-[11px] text-ink"><Lock size={11} />Locked</span>}
+              {locked && <span className="inline-flex items-center gap-1 text-[11px] text-ink"><Lock size={11} />{t.locked}</span>}
               <span className="ml-auto flex">
-                <button aria-label={locked ? 'Unlock theme' : 'Lock theme'} title={locked ? 'Unlock: AI may suggest changes again' : 'Lock: AI will never change this theme'} onClick={() => toggleLock(theme.id)} className="rounded p-1 text-muted hover:bg-graphite-soft hover:text-ink">
+                <button aria-label={locked ? t.unlock : t.lock} title={locked ? t.unlockTip : t.lockTip} onClick={() => toggleLock(theme.id)} className="rounded p-1 text-muted hover:bg-graphite-soft hover:text-ink">
                   {locked ? <Lock size={14} /> : <LockOpen size={14} />}
                 </button>
-                {!locked && <button aria-label="Delete theme" onClick={() => { if (confirm(`Delete theme "${theme.name}"? The quotes stay in your evidence.`)) deleteTheme(theme.id) }} className="rounded p-1 text-muted hover:bg-graphite-soft hover:text-counter"><Trash2 size={14} /></button>}
+                {!locked && <button aria-label={t.del} onClick={() => { if (confirm(t.delConfirm(theme.name))) deleteTheme(theme.id) }} className="rounded p-1 text-muted hover:bg-graphite-soft hover:text-counter"><Trash2 size={14} /></button>}
               </span>
             </div>
             {editing ? (
@@ -43,21 +45,21 @@ function Column({ theme, items, drag, setDrag }: { theme: Theme | null; items: E
                 onBlur={() => { if (name.trim() && name !== theme.name) updateTheme(theme.id, { name: name.trim() }); setEditing(false) }}
                 onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') { setName(theme.name); setEditing(false) } }} />
             ) : (
-              <h2 onClick={() => !locked && setEditing(true)} title={locked ? undefined : 'Click to rename'} className={cx('text-[14px] leading-snug font-semibold', !locked && 'cursor-text hover:text-ink')}>{theme.name}</h2>
+              <h2 onClick={() => !locked && setEditing(true)} title={locked ? undefined : t.rename} className={cx('text-[14px] leading-snug font-semibold', !locked && 'cursor-text hover:text-ink')}>{theme.name}</h2>
             )}
             {theme.description && <p className="mt-1 text-xs leading-relaxed text-muted">{theme.description}</p>}
-            {cov && <p className="mt-2 text-xs text-muted">{cov.quotes} quotes · {cov.people} of {cov.totalPeople} participants</p>}
+            {cov && <p className="mt-2 text-xs text-muted">{t.cov(cov.quotes, cov.people, cov.totalPeople)}</p>}
             {theme.status === 'suggested' && (
               <div className="mt-2.5 flex gap-1.5">
-                <Button size="sm" variant="primary" onClick={() => setThemeStatus(theme.id, 'confirmed')}><Check size={13} />Confirm</Button>
-                <Button size="sm" variant="ghost" onClick={() => setThemeStatus(theme.id, 'rejected')}><X size={13} />Reject</Button>
+                <Button size="sm" variant="primary" onClick={() => setThemeStatus(theme.id, 'confirmed')}><Check size={13} />{T.common.confirm}</Button>
+                <Button size="sm" variant="ghost" onClick={() => setThemeStatus(theme.id, 'rejected')}><X size={13} />{T.common.reject}</Button>
               </div>
             )}
           </>
         ) : (
           <>
-            <h2 className="text-[14px] font-semibold">Unsorted</h2>
-            <p className="mt-1 text-xs text-muted">Quotes not in any theme. Drag them onto a theme.</p>
+            <h2 className="text-[14px] font-semibold">{t.unsorted}</h2>
+            <p className="mt-1 text-xs text-muted">{t.unsortedD}</p>
           </>
         )}
       </header>
@@ -69,7 +71,7 @@ function Column({ theme, items, drag, setDrag }: { theme: Theme | null; items: E
             <EvidenceCard e={e} compact />
           </div>
         ))}
-        {!items.length && <p className="px-2 py-6 text-center text-xs text-muted">{theme ? 'Drop quotes here' : 'Every quote is in a theme.'}</p>}
+        {!items.length && <p className="px-2 py-6 text-center text-xs text-muted">{theme ? t.dropHere : t.allSorted}</p>}
       </div>
     </section>
   )
@@ -77,6 +79,7 @@ function Column({ theme, items, drag, setDrag }: { theme: Theme | null; items: E
 
 export function ThemesView({ onNeedKey }: { onNeedKey: () => void }) {
   const { project: p, addTheme, busy } = useStore()
+  const t = useT().themes
   const [drag, setDrag] = useState<Drag | null>(null)
   const act = useAIAction(onNeedKey)
   const live = p.evidence.filter((e) => e.status !== 'rejected')
@@ -88,13 +91,13 @@ export function ThemesView({ onNeedKey }: { onNeedKey: () => void }) {
 
   return (
     <>
-      <PageHeader title="Themes" sub="AI groups quotes into themes as a first pass. Rename, regroup and confirm them. Lock a theme to stop the AI from ever changing it."
+      <PageHeader title={t.title} sub={t.sub}
         actions={<>
-          <Button onClick={() => { const n = prompt('Name the new theme'); if (n?.trim()) addTheme(n.trim()) }}><Plus size={15} />New theme</Button>
-          <Button variant="primary" disabled={!!busy} onClick={() => act(runCluster, 'New theme suggestions added. Confirmed and locked themes were left untouched.')}><Wand2 size={15} />Suggest themes</Button>
+          <Button onClick={() => { const n = prompt(t.namePrompt); if (n?.trim()) addTheme(n.trim()) }}><Plus size={15} />{t.newTheme}</Button>
+          <Button variant="primary" disabled={!!busy} onClick={() => act(runCluster, t.suggestDone)}><Wand2 size={15} />{t.suggest}</Button>
         </>} />
       {!live.length ? (
-        <Empty title="No evidence to group yet" body="Confirm some quotes in Evidence first. Themes are built from them." />
+        <Empty title={t.emptyT} body={t.emptyB} />
       ) : (
         <div className="-mx-6 overflow-x-auto px-6 pb-4">
           <div className="flex items-start gap-3">
@@ -106,7 +109,7 @@ export function ThemesView({ onNeedKey }: { onNeedKey: () => void }) {
         </div>
       )}
       {rejected.length > 0 && (
-        <p className="mt-4 text-xs text-muted">Rejected themes: {rejected.map((t) => t.name).join(', ')}. The AI won't suggest them again.</p>
+        <p className="mt-4 text-xs text-muted">{t.rejectedList(rejected.map((x) => x.name).join(', '))}</p>
       )}
     </>
   )

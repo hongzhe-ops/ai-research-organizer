@@ -1,8 +1,8 @@
-import { History, Layers, LayoutDashboard, Lightbulb, Loader2, Pencil, Quote, RotateCcw, Settings as Cog, Library } from 'lucide-react'
+import { History, Languages, Layers, LayoutDashboard, Lightbulb, Loader2, Pencil, Quote, RotateCcw, Settings as Cog, Library } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { SettingsDialog } from './components/SettingsDialog'
 import { Button, cx } from './components/ui'
-import { useStore } from './store'
+import { useStore, useT } from './store'
 import type { View } from './types'
 import { ActivityView } from './views/ActivityView'
 import { EvidenceView } from './views/EvidenceView'
@@ -12,17 +12,19 @@ import { SourcesView } from './views/SourcesView'
 import { ThemesView } from './views/ThemesView'
 import { useRunAll } from './ai/useAI'
 
-const NAV: Array<{ view: View; label: string; icon: typeof Quote }> = [
-  { view: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { view: 'sources', label: 'Sources', icon: Library },
-  { view: 'evidence', label: 'Evidence', icon: Quote },
-  { view: 'themes', label: 'Themes', icon: Layers },
-  { view: 'insights', label: 'Insights', icon: Lightbulb },
-  { view: 'activity', label: 'Activity', icon: History },
+const NAV: Array<{ view: View; icon: typeof Quote }> = [
+  { view: 'overview', icon: LayoutDashboard },
+  { view: 'sources', icon: Library },
+  { view: 'evidence', icon: Quote },
+  { view: 'themes', icon: Layers },
+  { view: 'insights', icon: Lightbulb },
+  { view: 'activity', icon: History },
 ]
 
 export default function App() {
-  const { nav, go, project, settings, busy, loadDemo, notice, notify } = useStore()
+  const { nav, go, project, settings, busy, loadDemo, notice, notify, lang, setLang } = useStore()
+  const t = useT()
+  useEffect(() => { document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en' }, [lang])
   useEffect(() => { if (!notice) return; const t = setTimeout(() => notify(), 6000); return () => clearTimeout(t) }, [notice, notify])
   const [showSettings, setShowSettings] = useState(false)
   const runAll = useRunAll(() => setShowSettings(true))
@@ -39,12 +41,12 @@ export default function App() {
         <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
           <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1E3A8A" /><rect x="7" y="9" width="18" height="4" rx="1" fill="#FFE45C" /><rect x="7" y="16" width="12" height="2" rx="1" fill="#fff" /><rect x="7" y="21" width="15" height="2" rx="1" fill="#fff" /></svg>
           <div className="leading-tight">
-            <div className="text-[13px] font-semibold">Research Organizer</div>
-            <div className="text-[11px] text-muted">Evidence-first synthesis</div>
+            <div className="text-[13px] font-semibold">{t.app.name}</div>
+            <div className="text-[11px] text-muted">{t.app.tagline}</div>
           </div>
         </div>
         <nav aria-label="Main" className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:overflow-visible">
-          {NAV.map(({ view, label, icon: Icon }) => (
+          {NAV.map(({ view, icon: Icon }) => (
             <button
               key={view}
               onClick={() => go({ view })}
@@ -55,9 +57,9 @@ export default function App() {
               )}
             >
               <Icon size={16} />
-              <span>{label}</span>
+              <span>{t.nav[view]}</span>
               {pending[view] > 0 && (
-                <span title={`${pending[view]} AI drafts to review`} className="ml-auto inline-flex items-center gap-0.5 rounded-full border border-dashed border-graphite/60 px-1.5 text-[11px] text-graphite">
+                <span title={t.app.drafts(pending[view])} className="ml-auto inline-flex items-center gap-0.5 rounded-full border border-dashed border-graphite/60 px-1.5 text-[11px] text-graphite">
                   <Pencil size={9} />{pending[view]}
                 </span>
               )}
@@ -65,8 +67,8 @@ export default function App() {
           ))}
         </nav>
         <div className="mt-auto hidden border-t border-line p-4 text-xs leading-relaxed text-muted md:block">
-          <div className="mb-2 flex items-center gap-2"><span className="inline-block h-3 w-5 rounded-sm pencil" /> AI draft, not yet reviewed</div>
-          <div className="flex items-center gap-2"><span className="inline-block h-3 w-5 rounded-sm ink" /> Decided by you</div>
+          <div className="mb-2 flex items-center gap-2"><span className="inline-block h-3 w-5 rounded-sm pencil" /> {t.app.legendDraft}</div>
+          <div className="flex items-center gap-2"><span className="inline-block h-3 w-5 rounded-sm ink" /> {t.app.legendInk}</div>
         </div>
       </aside>
 
@@ -74,20 +76,23 @@ export default function App() {
         <header className="flex flex-wrap items-center gap-3 border-b border-line bg-white px-6 py-3">
           <div className="min-w-0 flex-1">
             <div className="truncate text-[14px] font-semibold">{project.name}</div>
-            <div className="truncate text-xs text-muted">{project.question || 'No research question yet'}</div>
+            <div className="truncate text-xs text-muted">{project.question || t.app.noQuestion}</div>
           </div>
           {project.isDemo && (
-            <span className="rounded-full bg-warn-soft px-2.5 py-1 text-[11px] font-medium text-warn">Demo study · fictional data</span>
+            <span className="rounded-full bg-warn-soft px-2.5 py-1 text-[11px] font-medium text-warn">{t.app.demoBadge}</span>
           )}
-          <Button variant="ghost" size="sm" onClick={() => { if (confirm('Reset the demo study? Your changes in this browser will be lost.')) loadDemo() }} title="Reset demo study">
-            <RotateCcw size={14} /> Reset
+          <Button variant="ghost" size="sm" onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} aria-label={t.app.switchLangLabel} title={t.app.switchLangLabel}>
+            <Languages size={14} /> {t.app.switchLang}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { if (confirm(t.app.resetConfirm)) loadDemo() }}>
+            <RotateCcw size={14} /> {t.app.reset}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-            <Cog size={14} /> {settings.apiKey ? 'AI connected' : 'Connect AI'}
+            <Cog size={14} /> {settings.apiKey ? t.app.aiConnected : t.app.connectAI}
           </Button>
           <Button variant="primary" size="sm" disabled={!!busy} onClick={runAll}>
             {busy ? <Loader2 size={14} className="animate-spin" /> : <Pencil size={14} />}
-            {busy ? busy : 'Run AI analysis'}
+            {busy ? busy : t.app.run}
           </Button>
         </header>
 
@@ -106,7 +111,7 @@ export default function App() {
       {notice && (
         <div role="status" className={cx('fixed right-4 bottom-4 z-[60] flex max-w-sm items-start gap-3 rounded-lg px-4 py-3 text-[13px] leading-snug shadow-lg', notice.tone === 'error' ? 'bg-white text-text ring-1 ring-counter/40' : 'bg-ink text-white')}>
           <span className="flex-1">{notice.text}</span>
-          <button aria-label="Dismiss" onClick={() => notify()} className="opacity-70 hover:opacity-100">×</button>
+          <button aria-label={t.app.dismiss} onClick={() => notify()} className="opacity-70 hover:opacity-100">×</button>
         </div>
       )}
     </div>

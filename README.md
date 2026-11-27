@@ -4,7 +4,7 @@ An AI-assisted synthesis tool for product designers and user researchers. Import
 
 **Live demo:** https://hongzhe-ops.github.io/ai-research-organizer/
 
-The demo opens with a fictional study, *Freelance designers and client feedback*, so it can be explored without an API key. Connect your own Anthropic or OpenAI key in Settings to analyse your own material.
+The interface and the demo study are available in Chinese and English (toggle in the header; it follows the browser language by default). The demo opens with a fictional study, *Freelance designers and client feedback*, so it can be explored without an API key. Connect your own Anthropic or OpenAI key in Settings to analyse your own material.
 
 ## The problem
 

@@ -5,13 +5,15 @@ import { ImportDialog } from '../components/ImportDialog'
 import { TracePanel } from '../components/TracePanel'
 import { Button, Empty, PageHeader, SourceIcon, cx } from '../components/ui'
 import { locate } from '../lib/text'
-import { useStore } from '../store'
+import { useStore, useT } from '../store'
 import type { Evidence } from '../types'
 
 interface Span { start: number; end: number; ev: Evidence }
 
 export function SourcesView({ onNeedKey }: { onNeedKey: () => void }) {
   const { project: p, nav, go, addEvidence, deleteSource, busy } = useStore()
+  const T = useT()
+  const t = T.sources
   const [importing, setImporting] = useState(false)
   const act = useAIAction(onNeedKey)
   const source = p.sources.find((s) => s.id === nav.sourceId) || p.sources[0]
@@ -59,8 +61,8 @@ export function SourcesView({ onNeedKey }: { onNeedKey: () => void }) {
   if (!p.sources.length) {
     return (
       <>
-        <PageHeader title="Sources" />
-        <Empty title="Start with your research material" body="Import interview transcripts, PDFs or text from web pages. Everything stays in this browser." action={<Button variant="primary" onClick={() => setImporting(true)}><Plus size={15} />Import a source</Button>} />
+        <PageHeader title={t.title} />
+        <Empty title={t.emptyT} body={t.emptyB} action={<Button variant="primary" onClick={() => setImporting(true)}><Plus size={15} />{t.import}</Button>} />
         {importing && <ImportDialog onClose={() => setImporting(false)} onImported={(id) => go({ view: 'sources', sourceId: id })} />}
       </>
     )
@@ -80,7 +82,7 @@ export function SourcesView({ onNeedKey }: { onNeedKey: () => void }) {
         <mark key={s.ev.id} id={`hl-${s.ev.id}`} tabIndex={0}
           onClick={() => go({ view: 'sources', sourceId: source.id, focusEvidenceId: s.ev.id })}
           onKeyDown={(e) => e.key === 'Enter' && go({ view: 'sources', sourceId: source.id, focusEvidenceId: s.ev.id })}
-          title={draft ? 'AI draft quote. Click to see where it is used.' : 'Evidence. Click to see where it is used.'}
+          title={draft ? t.hlDraftTitle : t.hlTitle}
           className={cx(draft ? 'hl-draft' : 'hl', s.ev.id === focusId && 'hl-focus')}>
           {source.content.slice(s.start, s.end)}
         </mark>,
@@ -93,8 +95,8 @@ export function SourcesView({ onNeedKey }: { onNeedKey: () => void }) {
 
   return (
     <>
-      <PageHeader title="Sources" sub="Highlights show every quote taken from a source. Select any passage to add evidence the AI missed."
-        actions={<Button variant="primary" onClick={() => setImporting(true)}><Plus size={15} />Import a source</Button>} />
+      <PageHeader title={t.title} sub={t.sub}
+        actions={<Button variant="primary" onClick={() => setImporting(true)}><Plus size={15} />{t.import}</Button>} />
       <div className="grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)_300px]">
         <ul className="space-y-1" aria-label="Sources">
           {p.sources.map((s) => (
@@ -104,7 +106,7 @@ export function SourcesView({ onNeedKey }: { onNeedKey: () => void }) {
                 <span className="mt-0.5 text-muted"><SourceIcon type={s.type} /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-medium">{s.participant || s.title}</span>
-                  <span className="block text-xs text-muted">{evCount(s.id)} quotes</span>
+                  <span className="block text-xs text-muted">{t.quotes(evCount(s.id))}</span>
                 </span>
               </button>
             </li>
@@ -116,13 +118,13 @@ export function SourcesView({ onNeedKey }: { onNeedKey: () => void }) {
             <div className="flex flex-wrap items-center gap-2 border-b border-line px-6 py-3.5">
               <div className="min-w-0 flex-1">
                 <h2 className="truncate text-[15px] font-semibold">{source.title}</h2>
-                <p className="text-xs text-muted"><span className="capitalize">{source.type}</span>{source.participant ? ` · ${source.participant}` : ''}</p>
+                <p className="text-xs text-muted"><span>{T.type[source.type]}</span>{source.participant ? ` · ${source.participant}` : ''}</p>
               </div>
-              {source.url && <a href={source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-ink hover:underline">Open original <ExternalLink size={12} /></a>}
-              <Button size="sm" variant="outline" disabled={!!busy} onClick={() => act(() => runExtract(source.id), 'New quotes added as AI drafts. Review them in Evidence.')}>
-                <Wand2 size={13} />Extract evidence
+              {source.url && <a href={source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-ink hover:underline">{t.openOriginal} <ExternalLink size={12} /></a>}
+              <Button size="sm" variant="outline" disabled={!!busy} onClick={() => act(() => runExtract(source.id), t.extractDone)}>
+                <Wand2 size={13} />{t.extract}
               </Button>
-              <Button size="sm" variant="ghost" aria-label="Delete source" onClick={() => { if (confirm(`Delete "${source.title}" and the quotes taken from it?`)) { deleteSource(source.id); go({ view: 'sources' }) } }}>
+              <Button size="sm" variant="ghost" aria-label={t.del} onClick={() => { if (confirm(t.delConfirm(source.title))) { deleteSource(source.id); go({ view: 'sources' }) } }}>
                 <Trash2 size={14} />
               </Button>
             </div>
@@ -132,7 +134,7 @@ export function SourcesView({ onNeedKey }: { onNeedKey: () => void }) {
                 <button onMouseDown={(e) => e.preventDefault()} onClick={addSelection}
                   className="absolute z-10 inline-flex -translate-x-1/2 -translate-y-[calc(100%+6px)] items-center gap-1.5 rounded-md bg-ink px-2.5 py-1.5 font-sans text-xs font-medium text-white shadow-lg"
                   style={{ left: sel.x, top: sel.y }}>
-                  <Plus size={13} /> Add as evidence
+                  <Plus size={13} /> {t.addEv}
                 </button>
               )}
             </div>
@@ -142,10 +144,10 @@ export function SourcesView({ onNeedKey }: { onNeedKey: () => void }) {
         <aside>
           {focus ? <TracePanel evidence={focus} /> : (
             <div className="rounded-xl border border-dashed border-line p-5 text-[13px] leading-relaxed text-muted">
-              <p className="mb-3 font-medium text-text">Trace a quote</p>
-              <p>Click a highlight to see which themes and insights rely on it.</p>
-              <p className="mt-3 flex items-center gap-2"><mark className="hl px-1">Solid</mark> confirmed evidence</p>
-              <p className="mt-1.5 flex items-center gap-2"><mark className="hl-draft">Dashed</mark><Pencil size={11} /> AI draft</p>
+              <p className="mb-3 font-medium text-text">{t.traceT}</p>
+              <p>{t.traceB}</p>
+              <p className="mt-3 flex items-center gap-2"><mark className="hl px-1">{t.solid}</mark> {t.solidD}</p>
+              <p className="mt-1.5 flex items-center gap-2"><mark className="hl-draft">{t.dashed}</mark><Pencil size={11} /> {t.dashedD}</p>
             </div>
           )}
         </aside>
