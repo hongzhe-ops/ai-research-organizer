@@ -1,4 +1,4 @@
-import type { Insight, LogEntry, Source, Theme } from './types'
+import type { Insight, Intercepted, LogEntry, Source, Theme } from './types'
 
 /* 中文版演示研究。所有受访者和帖子均为虚构。每条引语都是原文中的连续片段（由 scripts/check-demo.ts 校验）。 */
 
@@ -115,7 +115,7 @@ export const themesZh: Theme[] = [
 ]
 
 export const insightsZh: Insight[] = [
-  { id: 'i1', statement: '分散的反馈渠道制造了隐形的整理工作，设计师在开始设计之前就要先消化掉。', themeIds: ['t1', 't5'], supporting: ['e1', 'e2', 'e17', 'e11'], counter: ['e14', 'e15', 'e7'], origin: 'ai', status: 'confirmed', decisionNote: '保留，但反驳证据说明流程规则可以消除大部分这类工作。' },
+  { id: 'i1', statement: '分散的反馈渠道制造了隐形的整理工作，设计师在开始设计之前就要先消化掉。', themeIds: ['t1', 't5'], supporting: ['e1', 'e2', 'e17', 'e11'], counter: ['e14', 'e15', 'e7'], origin: 'ai', status: 'confirmed', decisionNote: '保留，但反驳证据说明流程规则可以消除大部分这类工作。', versions: [{ statement: '反馈渠道分散是自由设计师浪费时间的主要原因。', at: T0 + DAY + 3_800_000, actor: 'ai' }] },
   { id: 'i2', statement: '设计师希望把冲突摆在客户面前，而不是替客户做决定。', themeIds: ['t2'], supporting: ['e20', 'e23', 'e4', 'e21'], counter: ['e22'], origin: 'ai', status: 'suggested' },
   { id: 'i3', statement: '对自由设计师来说，清楚记录“谁批准了什么”比更快的修改工具更重要。', themeIds: ['t3'], supporting: ['e12', 'e25', 'e13', 'e6'], counter: ['e10'], origin: 'ai', status: 'suggested' },
   { id: 'i4', statement: '只有当分组理由可以被查看时，自动分组反馈才能被接受。', themeIds: [], supporting: ['e19', 'e18'], counter: [], origin: 'ai', status: 'suggested' },
@@ -123,7 +123,7 @@ export const insightsZh: Insight[] = [
 ]
 
 export const logZh: LogEntry[] = [
-  { id: 'l1', at: T0 + DAY + 3_600_000, actor: 'ai', text: '从 6 份资料中提取了 24 条引语。另有 2 条与原文对不上，已丢弃。' },
+  { id: 'l1', at: T0 + DAY + 3_600_000, actor: 'ai', text: '从 6 份资料中提取了 24 条引语。另有 2 条与原文对不上，已拦截。' },
   { id: 'l2', at: T0 + DAY + 3_700_000, actor: 'ai', text: '将证据分为 6 个主题。' },
   { id: 'l3', at: T0 + DAY + 3_800_000, actor: 'ai', text: '起草了 5 条洞察，附有支持和反驳证据。' },
   { id: 'l4', at: T0 + 2 * DAY, actor: 'researcher', text: '否决证据：“我发了一个 Figma 原型链接。”', target: { kind: 'evidence', id: 'e24' } },
@@ -132,4 +132,9 @@ export const logZh: LogEntry[] = [
   { id: 'l7', at: T0 + 2 * DAY + 900_000, actor: 'researcher', text: '确认并锁定主题“反馈来自太多渠道”。', target: { kind: 'theme', id: 't1' } },
   { id: 'l8', at: T0 + 2 * DAY + 1_500_000, actor: 'researcher', text: '查看了 4 条支持引语和 3 条反驳引语后，确认了这条洞察。', target: { kind: 'insight', id: 'i1' } },
   { id: 'l9', at: T0 + 2 * DAY + 1_800_000, actor: 'researcher', text: '否决洞察：“客户更喜欢直接在 Figma 里给反馈。”理由：三次提及中有两次与之矛盾。', target: { kind: 'insight', id: 'i5' } },
+]
+
+export const interceptedZh: Intercepted[] = [
+  { id: 'x1', sourceId: 's1', quote: '客户从来不看我的邮件，所以我干脆不发了。', at: T0 + DAY + 3_600_000 },
+  { id: 'x2', sourceId: 's4', quote: '只有打电话，客户才会认真对待反馈。', at: T0 + DAY + 3_600_000 },
 ]

@@ -34,6 +34,14 @@ export interface Theme {
   status: Status
   /** Locked themes are never changed by AI re-clustering. */
   locked: boolean
+  isNew?: boolean
+}
+
+export interface InsightVersion {
+  statement: string
+  at: number
+  actor: Origin
+  reason?: string
 }
 
 export interface Insight {
@@ -45,6 +53,19 @@ export interface Insight {
   origin: Origin
   status: Status
   decisionNote?: string
+  /** Earlier wordings, oldest first. */
+  versions?: InsightVersion[]
+  /** Set when something it depends on changed, e.g. a source was deleted. */
+  needsReview?: string
+  isNew?: boolean
+}
+
+/** A quote the AI proposed that did not appear in the source, so it was blocked. */
+export interface Intercepted {
+  id: string
+  sourceId: string
+  quote: string
+  at: number
 }
 
 export interface LogEntry {
@@ -55,6 +76,11 @@ export interface LogEntry {
   target?: { kind: 'source' | 'evidence' | 'theme' | 'insight'; id: string }
 }
 
+export interface RunSummary {
+  at: number
+  lines: string[]
+}
+
 export interface Project {
   name: string
   question: string
@@ -63,7 +89,9 @@ export interface Project {
   evidence: Evidence[]
   themes: Theme[]
   insights: Insight[]
+  intercepted: Intercepted[]
   log: LogEntry[]
+  lastRun?: RunSummary
 }
 
 export type Provider = 'anthropic' | 'openai'
@@ -74,4 +102,4 @@ export interface Settings {
   model: string
 }
 
-export type View = 'overview' | 'sources' | 'evidence' | 'themes' | 'insights' | 'activity'
+export type View = 'overview' | 'sources' | 'evidence' | 'themes' | 'workspace' | 'validate' | 'export'

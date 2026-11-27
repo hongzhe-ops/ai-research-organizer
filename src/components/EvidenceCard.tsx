@@ -16,7 +16,7 @@ export function EvidenceCard({ e, compact, actions = true, tone }: { e: Evidence
     <div className={cx('rounded-lg', tone === 'counter' ? 'border border-counter/25 border-l-[3px] border-l-counter bg-counter-soft/50' : cardClass(e.status), compact ? 'p-3' : 'p-4')}>
       <p className={cx('quote', compact && 'text-[14px]')}>“{e.quote}”</p>
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <button onClick={() => go({ view: 'sources', sourceId: e.sourceId, focusEvidenceId: e.id })}
+        <button onClick={() => go({ view: 'workspace', sourceId: e.sourceId, focusEvidenceId: e.id })}
           className="text-left text-xs text-muted underline decoration-line underline-offset-2 hover:text-ink hover:decoration-ink" title={T.openSource}>
           {src?.participant || src?.title}
         </button>

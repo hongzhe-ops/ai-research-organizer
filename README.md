@@ -1,6 +1,6 @@
 # AI Research Organizer
 
-An AI-assisted synthesis tool for product designers and user researchers. Import interview transcripts, PDFs and web pages. The AI drafts evidence, themes and insights, and **every insight stays traceable to the exact words a participant said**. The researcher confirms, edits or rejects each one.
+**Get to research insights you can trust, faster.** An AI-assisted synthesis tool for product designers and user researchers. Speed is the baseline; trust is the point. The AI drafts evidence, themes and insights, **every insight stays traceable to the exact words a participant said**, and the researcher decides what becomes a finding.
 
 **Live demo:** https://hongzhe-ops.github.io/ai-research-organizer/
 
@@ -24,6 +24,39 @@ Qualitative synthesis is slow, and AI makes it faster in a way researchers don't
 | **Show the counter-evidence** | Every insight shows quotes that challenge it next to the quotes that support it. The AI is instructed to look for them. |
 | **Coverage, not confidence** | No made-up confidence scores. Insights show how many participants and sources stand behind them, and flag claims that rest on a single person. |
 | **Every decision is traceable** | Edits and rejections require a reason. The activity log records what the AI proposed and what the researcher decided. |
+
+## The six-step flow
+
+`01 Import sources → 02 Extract evidence → 03 Organize themes → 04 Generate insights → 05 Human validation → 06 Export findings`
+
+Every step tells you what to do now, how much is left to review, and what comes next. You can move between steps freely.
+
+## Friction matched to risk
+
+| Action | Interaction |
+| --- | --- |
+| Confirm a quote | One click, or confirm all drafts from a source at once |
+| Annotate a quote | Edit in place |
+| Adjust themes | Drag, merge, split, rename, lock |
+| Reject an AI insight | Quick reason chips, note optional |
+| Confirm an insight | Only possible with its evidence open |
+| Rewrite a finding | Every earlier wording is kept in its history |
+
+## The evidence workspace
+
+Three linked columns: sources and participants on the left, the transcript with evidence highlighted in the middle, insights and decisions on the right. Select an insight and its supporting (yellow) and challenging (red) quotes light up in the transcripts, with previous/next navigation across sources. Click any highlight to see which themes and insights use it. Select any passage to add evidence the AI missed.
+
+## Designed failure states
+
+| Situation | What the product does |
+| --- | --- |
+| AI quotes something that isn't in the source | Blocked and listed with the reason |
+| Too little evidence to draw insights | Warns and suggests adding material before drafting |
+| Participants disagree | Flags "Views differ" and shows both sides |
+| A source is deleted | Shows the impact first, then marks affected insights "Needs review" |
+| AI is re-run | Keeps every human decision and summarises what changed |
+| An AI request fails | Keeps finished work and offers a retry |
+| Analysis takes a while | Shows each stage and can be cancelled |
 
 ## Key interaction decisions
 

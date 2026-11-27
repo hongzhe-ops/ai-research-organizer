@@ -1,6 +1,6 @@
-import { evZh, extraEvZh, insightsZh, logZh, metaZh, sourcesZh, themesZh } from './demo-zh.ts'
+import { evZh, extraEvZh, insightsZh, interceptedZh, logZh, metaZh, sourcesZh, themesZh } from './demo-zh.ts'
 import type { Lang } from './i18n'
-import type { Evidence, Insight, LogEntry, Project, Source, Theme } from './types'
+import type { Evidence, Insight, Intercepted, LogEntry, Project, Source, Theme } from './types'
 
 /*
  * A fictional study used as the demo project. All participants and posts are invented.
@@ -125,6 +125,7 @@ const insights: Insight[] = [
     id: 'i1', statement: 'Fragmented feedback channels create hidden admin work that designers absorb before any design happens.',
     themeIds: ['t1', 't5'], supporting: ['e1', 'e2', 'e17', 'e11'], counter: ['e14', 'e15', 'e7'], origin: 'ai', status: 'confirmed',
     decisionNote: 'Kept, but the counter-evidence shows process rules can remove most of this work.',
+    versions: [{ statement: 'Fragmented feedback channels are the main reason freelance designers lose time.', at: T0 + DAY + 3_800_000, actor: 'ai' }],
   },
   {
     id: 'i2', statement: 'Designers want conflicts made visible to clients rather than resolved on their behalf.',
@@ -145,8 +146,13 @@ const insights: Insight[] = [
   },
 ]
 
+const intercepted: Intercepted[] = [
+  { id: 'x1', sourceId: 's1', quote: 'Clients never read my emails, so I stopped sending them.', at: T0 + DAY + 3_600_000 },
+  { id: 'x2', sourceId: 's4', quote: 'Calls are the only way clients take feedback seriously.', at: T0 + DAY + 3_600_000 },
+]
+
 const log: LogEntry[] = [
-  { id: 'l1', at: T0 + DAY + 3_600_000, actor: 'ai', text: 'Extracted 24 evidence quotes from 6 sources. 2 proposed quotes were discarded because they did not match the source text.' },
+  { id: 'l1', at: T0 + DAY + 3_600_000, actor: 'ai', text: 'Extracted 24 evidence quotes from 6 sources. Blocked 2 proposed quotes that did not match the source text.' },
   { id: 'l2', at: T0 + DAY + 3_700_000, actor: 'ai', text: 'Grouped evidence into 6 themes.' },
   { id: 'l3', at: T0 + DAY + 3_800_000, actor: 'ai', text: 'Drafted 5 insights with supporting and counter evidence.' },
   { id: 'l4', at: T0 + 2 * DAY, actor: 'researcher', text: 'Rejected evidence: "I shared a Figma prototype link."', target: { kind: 'evidence', id: 'e24' } },
@@ -160,7 +166,7 @@ const log: LogEntry[] = [
 function zhProject(): Project {
   const evidence: Evidence[] = evZh.map(([id, sourceId, quote, status, rationale, note]) => ({ id, sourceId, quote, status, rationale, note, origin: 'ai' }))
   evidence.push({ id: 'e25', sourceId: 's3', quote: extraEvZh.quote, status: 'confirmed', origin: 'researcher', note: extraEvZh.note })
-  return { ...metaZh, isDemo: true, sources: sourcesZh, evidence, themes: themesZh, insights: insightsZh, log: [...logZh].reverse() }
+  return { ...metaZh, isDemo: true, sources: sourcesZh, evidence, themes: themesZh, insights: insightsZh, intercepted: interceptedZh, log: [...logZh].reverse() }
 }
 
 export function demoProject(lang: Lang = 'en'): Project {
@@ -169,10 +175,10 @@ export function demoProject(lang: Lang = 'en'): Project {
     name: 'Freelance designers and client feedback',
     question: 'How do freelance designers collect, interpret and act on client feedback?',
     isDemo: true,
-    sources, evidence, themes, insights, log: [...log].reverse(),
+    sources, evidence, themes, insights, intercepted, log: [...log].reverse(),
   })
 }
 
 export function emptyProject(lang: Lang = 'en'): Project {
-  return { name: lang === 'zh' ? '未命名研究' : 'Untitled study', question: '', isDemo: false, sources: [], evidence: [], themes: [], insights: [], log: [] }
+  return { name: lang === 'zh' ? '未命名研究' : 'Untitled study', question: '', isDemo: false, sources: [], evidence: [], themes: [], insights: [], intercepted: [], log: [] }
 }

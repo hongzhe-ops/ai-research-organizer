@@ -1,158 +1,76 @@
-import { ExternalLink, Pencil, Plus, Trash2, Wand2 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { runExtract, useAIAction } from '../ai/useAI'
+import { AlertTriangle, ExternalLink, PanelsTopLeft, Plus, Trash2, Wand2 } from 'lucide-react'
+import { useState } from 'react'
+import type { useAI } from '../ai/useAI'
+import { StepGuide } from '../components/Flow'
 import { ImportDialog } from '../components/ImportDialog'
-import { TracePanel } from '../components/TracePanel'
-import { Button, Empty, PageHeader, SourceIcon, cx } from '../components/ui'
-import { locate } from '../lib/text'
+import { Button, Dialog, Empty, SourceIcon } from '../components/ui'
 import { useStore, useT } from '../store'
-import type { Evidence } from '../types'
+import type { Source } from '../types'
 
-interface Span { start: number; end: number; ev: Evidence }
+function DeleteDialog({ source, onClose }: { source: Source; onClose: () => void }) {
+  const { project: p, deleteSource } = useStore()
+  const T = useT()
+  const t = T.sources
+  const ids = new Set(p.evidence.filter((e) => e.sourceId === source.id).map((e) => e.id))
+  const themes = p.themes.filter((x) => x.evidenceIds.some((e) => ids.has(e)))
+  const insights = p.insights.filter((i) => i.status !== 'rejected' && [...i.supporting, ...i.counter].some((e) => ids.has(e)))
+  return (
+    <Dialog title={t.impactT} onClose={onClose}>
+      <p className="mb-1 text-[14px] font-medium">{source.participant || source.title}</p>
+      {themes.length || insights.length ? (
+        <>
+          <p className="text-[13px] text-muted">{t.impactB(ids.size, themes.length, insights.length)}</p>
+          <ul className="my-3 space-y-1.5 rounded-lg bg-warn-soft p-3 text-[13px]">
+            {insights.map((i) => <li key={i.id} className="flex gap-2"><AlertTriangle size={14} className="mt-0.5 shrink-0 text-warn" />{i.statement}</li>)}
+          </ul>
+          <p className="mb-4 text-xs text-muted">{t.impactNote}</p>
+        </>
+      ) : <p className="mb-4 text-[13px] text-muted">{t.impactNone}</p>}
+      <div className="flex justify-end gap-2">
+        <Button onClick={onClose}>{T.common.cancel}</Button>
+        <Button variant="danger" onClick={() => { deleteSource(source.id); onClose() }}><Trash2 size={14} />{t.confirmDelete}</Button>
+      </div>
+    </Dialog>
+  )
+}
 
-export function SourcesView({ onNeedKey }: { onNeedKey: () => void }) {
-  const { project: p, nav, go, addEvidence, deleteSource, busy } = useStore()
+export function SourcesView({ ai }: { ai: ReturnType<typeof useAI> }) {
+  const { project: p, go, progress } = useStore()
   const T = useT()
   const t = T.sources
   const [importing, setImporting] = useState(false)
-  const act = useAIAction(onNeedKey)
-  const source = p.sources.find((s) => s.id === nav.sourceId) || p.sources[0]
-  const focusId = nav.focusEvidenceId
-  const textRef = useRef<HTMLDivElement>(null)
-  const [sel, setSel] = useState<{ text: string; x: number; y: number } | null>(null)
-
-  const spans = useMemo<Span[]>(() => {
-    if (!source) return []
-    const out: Span[] = []
-    for (const ev of p.evidence.filter((e) => e.sourceId === source.id && e.status !== 'rejected')) {
-      const hit = locate(source.content, ev.quote)
-      if (hit) out.push({ start: hit.start, end: hit.end, ev })
-    }
-    out.sort((a, b) => a.start - b.start)
-    // Drop overlaps so the text renders cleanly; the earlier quote wins.
-    return out.filter((s, i) => i === 0 || s.start >= out.slice(0, i).reduce((m, x) => Math.max(m, x.end), 0))
-  }, [source, p.evidence])
-
-  useEffect(() => {
-    if (!focusId) return
-    const el = document.getElementById(`hl-${focusId}`)
-    el?.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
-  }, [focusId, source?.id])
-
-  const onMouseUp = () => {
-    const s = window.getSelection()
-    const text = s?.toString().trim() || ''
-    if (!s || text.length < 6 || !textRef.current?.contains(s.anchorNode)) return setSel(null)
-    const r = s.getRangeAt(0).getBoundingClientRect()
-    const box = textRef.current.getBoundingClientRect()
-    setSel({ text, x: r.left - box.left + r.width / 2, y: r.top - box.top })
-  }
-
-  const addSelection = () => {
-    if (!sel || !source) return
-    const hit = locate(source.content, sel.text)
-    if (!hit) return setSel(null)
-    const id = addEvidence({ sourceId: source.id, quote: hit.text, origin: 'researcher', status: 'confirmed' })
-    window.getSelection()?.removeAllRanges()
-    setSel(null)
-    go({ view: 'sources', sourceId: source.id, focusEvidenceId: id })
-  }
-
-  if (!p.sources.length) {
-    return (
-      <>
-        <PageHeader title={t.title} />
-        <Empty title={t.emptyT} body={t.emptyB} action={<Button variant="primary" onClick={() => setImporting(true)}><Plus size={15} />{t.import}</Button>} />
-        {importing && <ImportDialog onClose={() => setImporting(false)} onImported={(id) => go({ view: 'sources', sourceId: id })} />}
-      </>
-    )
-  }
-
-  const focus = p.evidence.find((e) => e.id === focusId && e.sourceId === source?.id)
-  const evCount = (id: string) => p.evidence.filter((e) => e.sourceId === id && e.status !== 'rejected').length
-
-  const renderText = () => {
-    if (!source) return null
-    const parts: React.ReactNode[] = []
-    let at = 0
-    spans.forEach((s) => {
-      if (s.start > at) parts.push(source.content.slice(at, s.start))
-      const draft = s.ev.status === 'suggested'
-      parts.push(
-        <mark key={s.ev.id} id={`hl-${s.ev.id}`} tabIndex={0}
-          onClick={() => go({ view: 'sources', sourceId: source.id, focusEvidenceId: s.ev.id })}
-          onKeyDown={(e) => e.key === 'Enter' && go({ view: 'sources', sourceId: source.id, focusEvidenceId: s.ev.id })}
-          title={draft ? t.hlDraftTitle : t.hlTitle}
-          className={cx(draft ? 'hl-draft' : 'hl', s.ev.id === focusId && 'hl-focus')}>
-          {source.content.slice(s.start, s.end)}
-        </mark>,
-      )
-      at = s.end
-    })
-    parts.push(source.content.slice(at))
-    return parts
-  }
+  const [deleting, setDeleting] = useState<Source | null>(null)
+  const count = (id: string) => p.evidence.filter((e) => e.sourceId === id && e.status !== 'rejected').length
 
   return (
     <>
-      <PageHeader title={t.title} sub={t.sub}
-        actions={<Button variant="primary" onClick={() => setImporting(true)}><Plus size={15} />{t.import}</Button>} />
-      <div className="grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)_300px]">
-        <ul className="space-y-1" aria-label="Sources">
+      <StepGuide step="sources" actions={<Button variant="primary" onClick={() => setImporting(true)}><Plus size={15} />{t.import}</Button>} />
+      {!p.sources.length ? (
+        <Empty title={t.emptyT} body={t.emptyB} action={<Button variant="primary" onClick={() => setImporting(true)}><Plus size={15} />{t.import}</Button>} />
+      ) : (
+        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {p.sources.map((s) => (
-            <li key={s.id}>
-              <button onClick={() => go({ view: 'sources', sourceId: s.id })} aria-current={s.id === source?.id}
-                className={cx('flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left', s.id === source?.id ? 'bg-white shadow-[0_0_0_1px_var(--color-line)]' : 'hover:bg-white/60')}>
-                <span className="mt-0.5 text-muted"><SourceIcon type={s.type} /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] font-medium">{s.participant || s.title}</span>
-                  <span className="block text-xs text-muted">{t.quotes(evCount(s.id))}</span>
-                </span>
-              </button>
+            <li key={s.id} className="flex flex-col rounded-xl border border-line bg-white p-4">
+              <div className="mb-2 flex items-start gap-2.5">
+                <span className="mt-0.5 rounded-md bg-graphite-soft p-1.5 text-muted"><SourceIcon type={s.type} size={15} /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14px] font-semibold">{s.participant || s.title}</p>
+                  <p className="text-xs text-muted">{T.type[s.type]} · {t.quotes(count(s.id))}</p>
+                </div>
+                <button aria-label={t.del} onClick={() => setDeleting(s)} className="rounded p-1 text-muted hover:bg-graphite-soft hover:text-counter"><Trash2 size={14} /></button>
+              </div>
+              <p className="quote line-clamp-3 flex-1 text-[13.5px] text-muted">{s.content.replace(/^.*?[:：]\s*/m, '').slice(0, 220)}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => go({ view: 'workspace', sourceId: s.id })}><PanelsTopLeft size={13} />{t.open}</Button>
+                <Button size="sm" variant="ghost" disabled={!!progress} onClick={() => ai.extract(s.id)}><Wand2 size={13} />{t.extract}</Button>
+                {s.url && <a href={s.url} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 self-center text-xs text-ink hover:underline">{t.openOriginal}<ExternalLink size={11} /></a>}
+              </div>
             </li>
           ))}
         </ul>
-
-        {source && (
-          <article className="relative min-w-0 rounded-xl border border-line bg-white">
-            <div className="flex flex-wrap items-center gap-2 border-b border-line px-6 py-3.5">
-              <div className="min-w-0 flex-1">
-                <h2 className="truncate text-[15px] font-semibold">{source.title}</h2>
-                <p className="text-xs text-muted"><span>{T.type[source.type]}</span>{source.participant ? ` · ${source.participant}` : ''}</p>
-              </div>
-              {source.url && <a href={source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-ink hover:underline">{t.openOriginal} <ExternalLink size={12} /></a>}
-              <Button size="sm" variant="outline" disabled={!!busy} onClick={() => act(() => runExtract(source.id), t.extractDone)}>
-                <Wand2 size={13} />{t.extract}
-              </Button>
-              <Button size="sm" variant="ghost" aria-label={t.del} onClick={() => { if (confirm(t.delConfirm(source.title))) { deleteSource(source.id); go({ view: 'sources' }) } }}>
-                <Trash2 size={14} />
-              </Button>
-            </div>
-            <div ref={textRef} onMouseUp={onMouseUp} className="relative px-6 py-5 font-serif text-[15.5px] leading-[1.75] whitespace-pre-wrap">
-              {renderText()}
-              {sel && (
-                <button onMouseDown={(e) => e.preventDefault()} onClick={addSelection}
-                  className="absolute z-10 inline-flex -translate-x-1/2 -translate-y-[calc(100%+6px)] items-center gap-1.5 rounded-md bg-ink px-2.5 py-1.5 font-sans text-xs font-medium text-white shadow-lg"
-                  style={{ left: sel.x, top: sel.y }}>
-                  <Plus size={13} /> {t.addEv}
-                </button>
-              )}
-            </div>
-          </article>
-        )}
-
-        <aside>
-          {focus ? <TracePanel evidence={focus} /> : (
-            <div className="rounded-xl border border-dashed border-line p-5 text-[13px] leading-relaxed text-muted">
-              <p className="mb-3 font-medium text-text">{t.traceT}</p>
-              <p>{t.traceB}</p>
-              <p className="mt-3 flex items-center gap-2"><mark className="hl px-1">{t.solid}</mark> {t.solidD}</p>
-              <p className="mt-1.5 flex items-center gap-2"><mark className="hl-draft">{t.dashed}</mark><Pencil size={11} /> {t.dashedD}</p>
-            </div>
-          )}
-        </aside>
-      </div>
-      {importing && <ImportDialog onClose={() => setImporting(false)} onImported={(id) => go({ view: 'sources', sourceId: id })} />}
+      )}
+      {importing && <ImportDialog onClose={() => setImporting(false)} onImported={() => {}} />}
+      {deleting && <DeleteDialog source={deleting} onClose={() => setDeleting(null)} />}
     </>
   )
 }
