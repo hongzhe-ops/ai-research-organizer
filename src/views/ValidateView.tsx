@@ -38,7 +38,8 @@ export function ValidateView() {
   const split = live.filter((i) => i.status !== 'suggested' && !i.needsReview && !flags(p, i).single && flags(p, i).disagreement)
   const evDrafts = p.evidence.filter((e) => e.status === 'suggested').length
   const thDrafts = p.themes.filter((x) => x.status === 'suggested').length
-  const clear = !drafts.length && !affected.length && !evDrafts && !thDrafts
+  const decided = live.filter((i) => i.status === 'confirmed' || i.status === 'edited').length
+  const clear = decided > 0 && !drafts.length && !affected.length && !evDrafts && !thDrafts
 
   const log = p.log.filter((l) => who === 'all' || l.actor === who)
   const open = (target?: LogEntry['target']) => {
@@ -57,6 +58,13 @@ export function ValidateView() {
       <StepGuide step="validate" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <div className="space-y-4">
+          {!p.insights.length && (
+            <div className="flex gap-3 rounded-xl border border-dashed border-line bg-white p-5">
+              <Pencil size={18} className="shrink-0 text-graphite" />
+              <div><p className="text-[14px] font-semibold">{t.noneT}</p><p className="mt-1 text-[13px] text-muted">{t.noneB}</p>
+                <Button className="mt-3" variant="primary" size="sm" onClick={() => go({ view: 'workspace' })}>04 {T.steps.workspace.label}</Button></div>
+            </div>
+          )}
           {clear && (
             <div className="flex gap-3 rounded-xl border border-line bg-white p-5">
               <CheckCircle2 size={20} className="shrink-0 text-ink" />

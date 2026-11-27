@@ -2,6 +2,7 @@ export type Lang = 'zh' | 'en'
 
 const en = {
   app: {
+    newStudy: 'New study',
     name: 'Research Organizer', tagline: 'Trustworthy insights, faster', noQuestion: 'No research question yet', demoBadge: 'Demo study · fictional data',
     reset: 'Reset', resetConfirm: 'Reset the demo study? Your changes in this browser will be lost.', aiConnected: 'AI connected', connectAI: 'Connect AI', run: 'Run AI analysis',
     drafts: (n: number) => `${n} items to review`, dismiss: 'Dismiss', retry: 'Try again', switchLang: '中文', switchLangLabel: 'Switch to Chinese',
@@ -18,7 +19,9 @@ const en = {
   guide: { now: 'Now', next: 'Next', toReview: (n: number) => `${n} still to review in this step`, done: 'Everything in this step has been reviewed', go: 'Go to next step' },
   progress: { title: 'AI analysis in progress', cancel: 'Cancel', cancelled: 'Analysis cancelled. Results from finished stages were kept.', stage: (i: number, n: number) => `Stage ${i} of ${n}` },
   status: { suggested: 'AI draft', confirmed: 'Confirmed', added: 'Added by you', edited: 'Edited by you', rejected: 'Rejected' },
-  type: { interview: 'Interview', pdf: 'PDF', web: 'Web page', text: 'Text' },
+  type: { interview: 'Interview', observation: 'Observation', pdf: 'PDF', web: 'Web page', text: 'Notes' },
+  newStudy: { title: 'Start a new study', name: 'Study name', namePh: 'e.g. How students plan group projects', question: 'Research question', questionPh: 'What do you want to find out?', questionHint: 'The AI uses this to judge what counts as relevant evidence.', note: 'The new study replaces the one currently in this browser. You can reload the demo study at any time from Settings.', create: 'Create study', errName: 'Give the study a name.' },
+  reader: { hint: 'Select a passage in the text to add it as evidence.', exact: 'Add selection', sentence: 'Expand to full sentence', open: 'Read and excerpt', workspace: 'View in workspace' },
   common: { confirm: 'Confirm', reject: 'Reject', reopen: 'Reopen', cancel: 'Cancel', save: 'Save', aiReason: 'AI reason', yourNote: 'Your note', addNote: 'Add note', editNote: 'Edit note', notePlaceholder: 'Why this matters, or what to watch out for', openSource: 'Open in workspace', close: 'Close', colon: ': ', newBadge: 'New' },
   overview: {
     kicker: 'Evidence-first research synthesis',
@@ -36,7 +39,7 @@ const en = {
   },
   sources: {
     title: 'Import sources', import: 'Import a source', emptyT: 'Start with your research material', emptyB: 'Import interview transcripts, PDFs or text from web pages. Everything stays in this browser.',
-    quotes: (n: number) => `${n} quotes`, open: 'Open in workspace', extract: 'Extract evidence', extractDone: 'New quotes added as AI drafts. Review them in step 02.',
+    quotes: (n: number) => `${n} quotes`, open: 'Read and excerpt', extract: 'Extract evidence', extractDone: 'New quotes added as AI drafts. Review them in step 02.',
     del: 'Delete source', impactT: 'Delete this source?',
     impactB: (q: number, t: number, i: number) => `${q} quotes come from it. ${t} themes and ${i} insights use those quotes.`,
     impactNote: 'Affected insights will be marked “Needs review” so you can check whether they still hold.', impactNone: 'No themes or insights use quotes from this source.',
@@ -82,10 +85,15 @@ const en = {
     insufficientT: 'Not enough evidence yet',
     insufficientB: (q: number, p: number) => `Only ${q} confirmed quotes from ${p} ${p === 1 ? 'participant' : 'participants'}. Insights drawn from this little would be guesses. Confirm more evidence or import more sources first.`,
     anyway: 'Draft anyway', addMore: 'Import sources',
+    needAiT: 'Drafting insights needs an AI connection',
+    needAiB: 'To have the AI draft insights from your material, connect your own API key first. You can also write an insight yourself.',
+    connect: 'Connect AI', manual: 'Write an insight', manualT: 'Write an insight', manualThemes: 'Based on themes (optional)', manualHint: 'Confirmed quotes in the chosen themes become supporting evidence. You can adjust them afterwards.', manualSave: 'Save insight',
+    addTo: 'Add to an insight', asSupport: 'Supports', asCounter: 'Challenges', pickInsight: 'Choose an insight',
   },
   validate: {
     title: 'Human validation', drafts: 'Insights waiting for a decision', needsReview: 'Affected by a change', single: 'Resting on one participant', disagreement: 'Views differ',
     evDrafts: (n: number) => `${n} quotes are still AI drafts`, thDrafts: (n: number) => `${n} themes are still AI drafts`,
+    noneT: 'No insights yet', noneB: 'Draft insights with the AI or write one yourself in step 04, then come back to validate them.',
     clearT: 'Nothing left to validate', clearB: 'Every AI draft has been decided. You can export your findings.', open: 'Open',
     log: 'Decision record', logSub: 'What the AI proposed and what you decided. Use it to explain how a finding was reached.', all: 'Everything', ai: 'AI', you: 'You', emptyT: 'Nothing recorded yet',
   },
@@ -94,8 +102,9 @@ const en = {
     excluded: (n: number) => `${n} undecided ${n === 1 ? 'insight is' : 'insights are'} left out of the report. Decide on ${n === 1 ? 'it' : 'them'} in step 05 to include ${n === 1 ? 'it' : 'them'}.`,
     noneT: 'No decided insights yet', noneB: 'Only insights you have confirmed or rewritten are exported. Decide on at least one in the workspace.',
     method: 'Method', findings: 'Findings', support: 'Supporting evidence', counter: 'Challenging evidence', none: 'None found.',
-    methodBody: (s: number, p: number, q: number, x: number, d: number) => `Synthesised from ${s} sources (${p} participants). ${q} verbatim quotes were used as evidence. ${x} AI-proposed quotes were blocked for not matching the source. ${d} decisions were made by the researcher.`,
+    methodBody: (s: number, p: number, q: number, x: number, d: number) => `Synthesised from ${s} sources (${p} participants). ${q} verbatim quotes were used as evidence.${x ? ` ${x} AI-proposed quotes were blocked for not matching the source.` : ''} ${d} decisions were made by the researcher.`,
     aiNote: 'AI drafted the initial evidence, themes and insights. Every finding below was reviewed and decided by the researcher.',
+    manualNote: 'All evidence, themes and insights in this study were organised by the researcher.',
     generated: 'Generated', research: 'Research question',
   },
   run: { title: 'What changed in the last AI run', dismiss: 'Dismiss' },
@@ -112,6 +121,7 @@ const en = {
     webNote: "Browsers can't read most web pages directly. Copy the page text and paste it below. The link is kept so you can always return to the original.",
     text: 'Text', webPh: 'Paste the page text here', textPh: 'Interviewer: …\nParticipant: …', submit: 'Import source',
     errScan: 'This PDF has no selectable text, so it is probably a scan. Paste the text instead.', errFile: 'The file could not be read. Try a .txt, .md or text-based .pdf file.',
+    demoT: 'You are in the demo study', demoNew: 'Start a new study for this source (recommended)', demoAdd: 'Add it to the demo study', kind: 'Source type',
     errTitle: 'Give the source a title.', errText: 'Add the source text. It needs at least a few sentences.', errUrl: 'The link should start with http:// or https://',
   },
   ai: {
@@ -130,6 +140,7 @@ const en = {
   },
   log: {
     imported: (t: string) => `Imported source "${t}".`, removedSource: (t: string, n: number, i: number) => `Removed source "${t}" and ${n} linked quotes. ${i} insights marked for review.`,
+    addedIn: (s: string) => `Wrote an insight: "${s}"`, linked: 'Added a quote to an insight.', newStudy: (n: string) => `Started a new study "${n}".`,
     affected: (t: string) => `Source “${t}” was deleted. Some evidence is gone.`,
     addedEv: (q: string) => `Added evidence manually: "${q}"`, confirmedEv: (q: string) => `Confirmed evidence: "${q}"`, rejectedEv: (q: string) => `Rejected evidence: "${q}"`, reopenedEv: (q: string) => `Reopened evidence: "${q}"`,
     bulkEv: (n: number, t: string) => `Confirmed ${n} quotes from "${t}" in one go.`,
@@ -149,6 +160,7 @@ export type Dict = typeof en
 
 const zh: Dict = {
   app: {
+    newStudy: '新建研究',
     name: '研究整理助手', tagline: '更快获得值得信任的洞察', noQuestion: '还没有填写研究问题', demoBadge: '演示研究 · 虚构数据',
     reset: '重置', resetConfirm: '要重置演示研究吗？你在这个浏览器里做的修改会丢失。', aiConnected: 'AI 已连接', connectAI: '连接 AI', run: '运行 AI 分析',
     drafts: (n) => `${n} 项待审核`, dismiss: '关闭', retry: '重试', switchLang: 'EN', switchLangLabel: '切换到英文',
@@ -165,7 +177,9 @@ const zh: Dict = {
   guide: { now: '当前', next: '下一步', toReview: (n) => `本步骤还有 ${n} 项待审核`, done: '本步骤已全部审核', go: '进入下一步' },
   progress: { title: 'AI 正在分析', cancel: '取消', cancelled: '已取消分析，已完成阶段的结果都保留了。', stage: (i, n) => `第 ${i} / ${n} 阶段` },
   status: { suggested: 'AI 草稿', confirmed: '已确认', added: '你添加的', edited: '你修改过', rejected: '已否决' },
-  type: { interview: '访谈', pdf: 'PDF', web: '网页', text: '文本' },
+  type: { interview: '访谈', observation: '观察记录', pdf: 'PDF', web: '网页', text: '笔记' },
+  newStudy: { title: '新建研究', name: '研究名称', namePh: '例如：学生如何规划小组作业', question: '研究问题', questionPh: '你想弄清楚什么？', questionHint: 'AI 会根据它判断哪些内容算相关证据。', note: '新研究会替换这个浏览器里当前的研究。演示研究随时可以在设置中重新载入。', create: '创建研究', errName: '请给研究起个名字。' },
+  reader: { hint: '在原文中选中一段文字，就能加为证据。', exact: '按所选添加', sentence: '扩展为完整句子', open: '阅读原文并摘录', workspace: '在工作台中查看' },
   common: { confirm: '确认', reject: '否决', reopen: '重新打开', cancel: '取消', save: '保存', aiReason: 'AI 理由', yourNote: '你的备注', addNote: '添加备注', editNote: '修改备注', notePlaceholder: '为什么重要，或需要注意什么', openSource: '在工作台中查看', close: '关闭', colon: '：', newBadge: '新' },
   overview: {
     kicker: '证据优先的研究归纳',
@@ -183,7 +197,7 @@ const zh: Dict = {
   },
   sources: {
     title: '导入资料', import: '导入资料', emptyT: '从你的研究资料开始', emptyB: '导入访谈记录、PDF 或网页文字。所有内容只保存在这个浏览器里。',
-    quotes: (n) => `${n} 条引语`, open: '在工作台中打开', extract: '提取证据', extractDone: '新引语已作为 AI 草稿加入，请到第 02 步审阅。',
+    quotes: (n) => `${n} 条引语`, open: '阅读原文并摘录', extract: '提取证据', extractDone: '新引语已作为 AI 草稿加入，请到第 02 步审阅。',
     del: '删除资料', impactT: '要删除这份资料吗？',
     impactB: (q, t, i) => `有 ${q} 条引语来自这份资料，${t} 个主题和 ${i} 条洞察用到了这些引语。`,
     impactNote: '受影响的洞察会标记为“需要复核”，方便你检查它们是否仍然成立。', impactNone: '没有主题或洞察用到这份资料里的引语。',
@@ -229,10 +243,15 @@ const zh: Dict = {
     insufficientT: '证据还不够',
     insufficientB: (q, p) => `目前只有来自 ${p} 位受访者的 ${q} 条已确认引语。基于这么少的证据得出的洞察只是猜测，建议先确认更多证据或导入更多资料。`,
     anyway: '仍然起草', addMore: '导入资料',
+    needAiT: '起草洞察需要连接 AI',
+    needAiB: '要让 AI 根据你的资料起草洞察，需要先连接你自己的 API key。你也可以先自己写一条洞察。',
+    connect: '连接 AI', manual: '手动写洞察', manualT: '写一条洞察', manualThemes: '依据的主题（选填）', manualHint: '所选主题中已确认的引语会作为支持证据，之后可以调整。', manualSave: '保存洞察',
+    addTo: '加入洞察', asSupport: '作为支持', asCounter: '作为反驳', pickInsight: '选择洞察',
   },
   validate: {
     title: '人工验证', drafts: '等待决定的洞察', needsReview: '受修改影响', single: '只有一位受访者支撑', disagreement: '观点分歧',
     evDrafts: (n) => `${n} 条引语仍是 AI 草稿`, thDrafts: (n) => `${n} 个主题仍是 AI 草稿`,
+    noneT: '还没有洞察', noneB: '先在第 04 步让 AI 起草，或者自己写一条洞察，再回来验证。',
     clearT: '没有待验证的内容了', clearB: '所有 AI 草稿都已决定，可以导出研究结论。', open: '打开',
     log: '决策记录', logSub: '记录 AI 提出了什么、你决定了什么，可以用来说明一个结论是怎么得出的。', all: '全部', ai: 'AI', you: '你', emptyT: '还没有记录',
   },
@@ -241,8 +260,9 @@ const zh: Dict = {
     excluded: (n) => `有 ${n} 条尚未决定的洞察没有放进报告。在第 05 步做出决定后即可加入。`,
     noneT: '还没有已决定的洞察', noneB: '只有你确认或改写过的洞察才会被导出。请先在工作台中至少决定一条。',
     method: '研究方法', findings: '研究发现', support: '支持证据', counter: '反驳证据', none: '未发现。',
-    methodBody: (s, p, q, x, d) => `基于 ${s} 份资料（${p} 位受访者）归纳。共使用 ${q} 条逐字引语作为证据；AI 提出的 ${x} 条引语因与原文不符被拦截；研究者共做出 ${d} 项决定。`,
+    methodBody: (s, p, q, x, d) => `基于 ${s} 份资料（${p} 位受访者）归纳。共使用 ${q} 条逐字引语作为证据；${x ? `AI 提出的 ${x} 条引语因与原文不符被拦截；` : ''}研究者共做出 ${d} 项决定。`,
     aiNote: '初步的证据、主题和洞察由 AI 起草，以下每一条发现都经过研究者审阅和决定。',
+    manualNote: '本研究的证据、主题和洞察均由研究者手动整理。',
     generated: '生成时间', research: '研究问题',
   },
   run: { title: '本次 AI 运行的变化', dismiss: '知道了' },
@@ -259,6 +279,7 @@ const zh: Dict = {
     webNote: '浏览器无法直接读取大多数网页。请复制网页文字粘贴到下方，链接会保留，方便随时回到原网页。',
     text: '正文', webPh: '在这里粘贴网页文字', textPh: '访谈者：…\n受访者：…', submit: '导入资料',
     errScan: '这个 PDF 里没有可选中的文字，可能是扫描件，请改为粘贴文字。', errFile: '无法读取这个文件，请试试 .txt、.md 或文字版 .pdf。',
+    demoT: '你现在打开的是演示研究', demoNew: '新建一个研究来放这份资料（推荐）', demoAdd: '加到演示研究里', kind: '资料类型',
     errTitle: '请给资料起一个标题。', errText: '请添加资料正文，至少需要几句话。', errUrl: '链接需要以 http:// 或 https:// 开头',
   },
   ai: {
@@ -277,6 +298,7 @@ const zh: Dict = {
   },
   log: {
     imported: (t) => `导入了资料“${t}”。`, removedSource: (t, n, i) => `删除了资料“${t}”及其中 ${n} 条引语，${i} 条洞察被标记为需要复核。`,
+    addedIn: (s) => `手动写了一条洞察：“${s}”`, linked: '把一条引语加入了洞察。', newStudy: (n) => `新建研究“${n}”。`,
     affected: (t) => `资料“${t}”已被删除，部分证据随之消失。`,
     addedEv: (q) => `手动添加证据：“${q}”`, confirmedEv: (q) => `确认证据：“${q}”`, rejectedEv: (q) => `否决证据：“${q}”`, reopenedEv: (q) => `重新打开证据：“${q}”`,
     bulkEv: (n, t) => `一次确认了“${t}”中的 ${n} 条引语。`,

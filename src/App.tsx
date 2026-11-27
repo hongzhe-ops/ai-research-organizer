@@ -1,6 +1,7 @@
-import { Check, Languages, LayoutDashboard, Loader2, Pencil, RotateCcw, Settings as Cog, X } from 'lucide-react'
+import { Check, FilePlus2, Languages, LayoutDashboard, Loader2, Pencil, RotateCcw, Settings as Cog, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { cancelRun, useAI } from './ai/useAI'
+import { NewStudyDialog } from './components/NewStudyDialog'
 import { SettingsDialog } from './components/SettingsDialog'
 import { Button, cx } from './components/ui'
 import { STEPS, pendingFor, stepDone, useStore, useT } from './store'
@@ -41,6 +42,7 @@ export default function App() {
   const { nav, go, project, settings, progress, loadDemo, notice, notify, lang, setLang } = useStore()
   const t = useT()
   const [showSettings, setShowSettings] = useState(false)
+  const [showNew, setShowNew] = useState(false)
   const ai = useAI(() => setShowSettings(true))
   useEffect(() => { document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en' }, [lang])
   useEffect(() => {
@@ -107,7 +109,8 @@ export default function App() {
           <Button variant="ghost" size="sm" onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} aria-label={t.app.switchLangLabel} title={t.app.switchLangLabel}>
             <Languages size={14} /> {t.app.switchLang}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { if (confirm(t.app.resetConfirm)) loadDemo() }}><RotateCcw size={14} /> {t.app.reset}</Button>
+          {project.isDemo && <Button variant="ghost" size="sm" onClick={() => { if (confirm(t.app.resetConfirm)) loadDemo() }}><RotateCcw size={14} /> {t.app.reset}</Button>}
+          <Button variant="outline" size="sm" onClick={() => setShowNew(true)}><FilePlus2 size={14} /> {t.app.newStudy}</Button>
           <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}><Cog size={14} /> {settings.apiKey ? t.app.aiConnected : t.app.connectAI}</Button>
           <Button variant="primary" size="sm" disabled={!!progress} onClick={ai.all}>
             {progress ? <Loader2 size={14} className="animate-spin" /> : <Pencil size={14} />} {t.app.run}
@@ -128,6 +131,7 @@ export default function App() {
       </div>
 
       {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
+      {showNew && <NewStudyDialog onClose={() => setShowNew(false)} />}
       <ProgressPanel />
       {notice && !progress && (
         <div role="status" className={cx('fixed right-4 bottom-4 z-[60] flex max-w-sm items-start gap-3 rounded-lg px-4 py-3 text-[13px] leading-snug shadow-lg print:hidden', notice.tone === 'error' ? 'bg-white text-text ring-1 ring-counter/40' : 'bg-ink text-white')}>

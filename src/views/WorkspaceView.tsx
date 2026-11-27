@@ -1,10 +1,11 @@
-import { AlertTriangle, ArrowLeft, ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Eye, History, Layers, Lightbulb, PenLine, Plus, RotateCcw, Scale, Unlink, Wand2, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertTriangle, ArrowLeft, ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Eye, History, Layers, Lightbulb, PenLine, RotateCcw, Scale, Unlink, Wand2, X } from 'lucide-react'
+import { SourceReader } from '../components/SourceReader'
+import { useEffect, useMemo, useState } from 'react'
 import { evidenceSufficiency } from '../ai/pipeline'
 import type { useAI } from '../ai/useAI'
 import { EvidenceCard } from '../components/EvidenceCard'
 import { NewBadge, RunBanner, StepGuide } from '../components/Flow'
-import { Button, Dialog, Field, SourceIcon, StatusChip, cardClass, cx, inputCls } from '../components/ui'
+import { Button, Dialog, Field, FieldGroup, SourceIcon, StatusChip, cardClass, cx, inputCls } from '../components/ui'
 import { locate } from '../lib/text'
 import { coverage, flags, usage, useStore, useT } from '../store'
 import type { Evidence, Insight, Project } from '../types'
@@ -89,6 +90,52 @@ function InsufficientDialog({ q, people, onAnyway, onClose }: { q: number; peopl
         <Button variant="ghost" onClick={() => { onClose(); onAnyway() }}>{t.anyway}</Button>
         <Button variant="primary" onClick={() => { onClose(); go({ view: 'sources' }) }}>{t.addMore}</Button>
       </div>
+    </Dialog>
+  )
+}
+
+function NeedAIDialog({ onConnect, onManual, onClose }: { onConnect: () => void; onManual: () => void; onClose: () => void }) {
+  const t = useT().workspace
+  return (
+    <Dialog title={t.needAiT} onClose={onClose} width={480}>
+      <p className="text-[13px] leading-relaxed text-muted">{t.needAiB}</p>
+      <div className="mt-5 flex justify-end gap-2">
+        <Button onClick={() => { onClose(); onManual() }}><PenLine size={14} />{t.manual}</Button>
+        <Button variant="primary" onClick={() => { onClose(); onConnect() }}>{t.connect}</Button>
+      </div>
+    </Dialog>
+  )
+}
+
+function ManualInsightDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
+  const { project: p, addInsight } = useStore()
+  const T = useT()
+  const t = T.workspace
+  const [text, setText] = useState('')
+  const [themes, setThemes] = useState<string[]>([])
+  const [err, setErr] = useState('')
+  const live = p.themes.filter((x) => x.status !== 'rejected')
+  const save = () => {
+    if (!text.trim()) return setErr(t.errEmpty)
+    const id = addInsight(text.trim(), themes)
+    onClose()
+    onCreated(id)
+  }
+  return (
+    <Dialog title={t.manualT} onClose={onClose}>
+      <Field label={t.field}><textarea autoFocus className={cx(inputCls, 'quote')} rows={3} value={text} onChange={(e) => { setText(e.target.value); setErr('') }} /></Field>
+      {live.length > 0 && (
+        <FieldGroup label={t.manualThemes} hint={t.manualHint}>
+          <div className="flex flex-wrap gap-1.5">
+            {live.map((x) => (
+              <button key={x.id} type="button" aria-pressed={themes.includes(x.id)} onClick={() => setThemes((v) => (v.includes(x.id) ? v.filter((y) => y !== x.id) : [...v, x.id]))}
+                className={cx('rounded-full border px-3 py-1 text-[13px]', themes.includes(x.id) ? 'border-ink bg-ink-soft text-ink' : 'border-line')}>{x.name}</button>
+            ))}
+          </div>
+        </FieldGroup>
+      )}
+      {err && <p role="alert" className="mb-3 text-[13px] text-counter">{err}</p>}
+      <div className="flex justify-end gap-2"><Button onClick={onClose}>{T.common.cancel}</Button><Button variant="primary" onClick={save}>{t.manualSave}</Button></div>
     </Dialog>
   )
 }
@@ -208,7 +255,8 @@ function InsightDetail({ i, onLocate }: { i: Insight; onLocate: (e: Evidence) =>
 }
 
 function TraceCard({ e, onBack, onPickInsight }: { e: Evidence; onBack: () => void; onPickInsight: (id: string) => void }) {
-  const { project: p, go } = useStore()
+  const { project: p, go, linkEvidence } = useStore()
+  const [target, setTarget] = useState('')
   const T = useT()
   const t = T.workspace
   const u = usage(p, e.id)
@@ -223,6 +271,19 @@ function TraceCard({ e, onBack, onPickInsight }: { e: Evidence; onBack: () => vo
         {u.supports.map((x) => <li key={x.id}><button onClick={() => onPickInsight(x.id)} className="flex gap-2 text-left hover:text-ink"><Lightbulb size={14} className="mt-0.5 shrink-0 text-ink" /><span><span className="text-xs text-ink">{t.supports} · </span>{x.statement}</span></button></li>)}
         {u.challenges.map((x) => <li key={x.id}><button onClick={() => onPickInsight(x.id)} className="flex gap-2 text-left hover:text-counter"><Lightbulb size={14} className="mt-0.5 shrink-0 text-counter" /><span><span className="text-xs text-counter">{t.challenges} · </span>{x.statement}</span></button></li>)}
       </ul>
+      {p.insights.some((i) => i.status !== 'rejected') && e.status !== 'rejected' && (
+        <div className="mt-4 rounded-lg border border-line p-3">
+          <p className="mb-2 text-xs font-semibold">{t.addTo}</p>
+          <select aria-label={t.pickInsight} value={target} onChange={(x) => setTarget(x.target.value)} className={cx(inputCls, 'mb-2')}>
+            <option value="">{t.pickInsight}</option>
+            {p.insights.filter((i) => i.status !== 'rejected').map((i) => <option key={i.id} value={i.id}>{i.statement}</option>)}
+          </select>
+          <div className="flex gap-2">
+            <Button size="sm" disabled={!target} onClick={() => { linkEvidence(target, e.id, 'support'); onPickInsight(target) }}>{t.asSupport}</Button>
+            <Button size="sm" variant="danger" disabled={!target} onClick={() => { linkEvidence(target, e.id, 'counter'); onPickInsight(target) }}>{t.asCounter}</Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -230,13 +291,13 @@ function TraceCard({ e, onBack, onPickInsight }: { e: Evidence; onBack: () => vo
 /* ---------- the workspace ---------- */
 
 export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
-  const { project: p, nav, go, addEvidence, reviewed, markReviewed, progress } = useStore()
+  const { project: p, nav, go, reviewed, markReviewed, progress, settings } = useStore()
   const T = useT()
   const t = T.workspace
   const [trace, setTrace] = useState<string | null>(null)
-  const [sel, setSel] = useState<{ text: string; x: number; y: number } | null>(null)
   const [insufficient, setInsufficient] = useState<{ q: number; people: number } | null>(null)
-  const textRef = useRef<HTMLDivElement>(null)
+  const [needAI, setNeedAI] = useState(false)
+  const [manual, setManual] = useState(false)
 
   const insight = p.insights.find((i) => i.id === nav.insightId)
   const source = p.sources.find((s) => s.id === nav.sourceId) || p.sources[0]
@@ -255,8 +316,10 @@ export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
   const pickInsight = (id: string | undefined) => {
     setTrace(null)
     if (!id || id === insight?.id) return go({ view: 'workspace', sourceId: source?.id })
-    const i = p.insights.find((x) => x.id === id)!
-    const list = orderedEvidence(p, i)
+    const cur = useStore.getState().project
+    const i = cur.insights.find((x) => x.id === id)
+    if (!i) return
+    const list = orderedEvidence(cur, i)
     const here = list.find((e) => e.sourceId === source?.id)
     const first = here || list[0]
     go({ view: 'workspace', insightId: id, sourceId: first?.sourceId || source?.id, focusEvidenceId: first?.id })
@@ -269,23 +332,11 @@ export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
     locateEv(next)
   }
   const draft = () => {
+    if (!settings.apiKey) return setNeedAI(true)
     const s = evidenceSufficiency(p)
     if (!s.enough) setInsufficient({ q: s.quotes, people: s.people })
     else ai.insights()
   }
-
-  /* text with highlights */
-  const spans = useMemo(() => {
-    if (!source) return []
-    const out: Array<{ start: number; end: number; ev: Evidence }> = []
-    for (const ev of p.evidence.filter((e) => e.sourceId === source.id && e.status !== 'rejected')) {
-      const hit = locate(source.content, ev.quote)
-      if (hit) out.push({ start: hit.start, end: hit.end, ev })
-    }
-    out.sort((a, b) => a.start - b.start)
-    let maxEnd = 0
-    return out.filter((s) => { const ok = s.start >= maxEnd; if (ok) maxEnd = s.end; return ok })
-  }, [source, p.evidence])
 
   const markClass = (ev: Evidence) => {
     if (insight) {
@@ -294,25 +345,6 @@ export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
       return 'hl-dim'
     }
     return ev.status === 'suggested' ? 'hl-draft' : 'hl'
-  }
-
-  const onMouseUp = () => {
-    const s = window.getSelection()
-    const text = s?.toString().trim() || ''
-    if (!s || text.length < 4 || !textRef.current?.contains(s.anchorNode)) return setSel(null)
-    const r = s.getRangeAt(0).getBoundingClientRect()
-    const box = textRef.current.getBoundingClientRect()
-    setSel({ text, x: r.left - box.left + r.width / 2, y: r.top - box.top })
-  }
-  const addSelection = () => {
-    if (!sel || !source) return
-    const hit = locate(source.content, sel.text)
-    if (!hit) return setSel(null)
-    const id = addEvidence({ sourceId: source.id, quote: hit.text, origin: 'researcher', status: 'confirmed' })
-    window.getSelection()?.removeAllRanges()
-    setSel(null)
-    setTrace(id)
-    go({ ...nav, view: 'workspace', sourceId: source.id, focusEvidenceId: id })
   }
 
   const hitsIn = (sid: string) => insight ? {
@@ -324,7 +356,10 @@ export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
 
   return (
     <>
-      <StepGuide step="workspace" actions={<Button variant="primary" disabled={!!progress} onClick={draft}><Wand2 size={15} />{p.insights.length ? t.draftMore : t.draft}</Button>} />
+      <StepGuide step="workspace" actions={<>
+        <Button onClick={() => setManual(true)}><PenLine size={15} />{t.manual}</Button>
+        <Button variant="primary" disabled={!!progress} onClick={draft}><Wand2 size={15} />{p.insights.length ? t.draftMore : t.draft}</Button>
+      </>} />
       <RunBanner />
       <div className="grid gap-4 xl:h-[calc(100vh-150px)] xl:min-h-[560px] xl:grid-cols-[220px_minmax(0,1fr)_390px]">
         {/* left: sources and participants */}
@@ -340,7 +375,8 @@ export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
                     className={cx('flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left', s.id === source?.id ? 'bg-ink-soft' : 'hover:bg-paper', dim && 'opacity-50')}>
                     <span className="mt-0.5 text-muted"><SourceIcon type={s.type} size={13} /></span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-medium">{s.participant || s.title}</span>
+                      <span className="block truncate text-[13px] font-medium" title={s.title}>{s.title}</span>
+                      {s.participant && <span className="block truncate text-[11px] text-muted">{s.participant}</span>}
                       {hits ? (
                         <span className="mt-0.5 flex gap-1.5 text-[11px]">
                           {hits.s > 0 && <span className="rounded bg-mark/70 px-1 text-[#5C4A00]">{hits.s}</span>}
@@ -373,33 +409,10 @@ export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
                   </div>
                 )}
               </div>
-              <div ref={textRef} onMouseUp={onMouseUp} className="relative min-h-0 flex-1 overflow-y-auto px-6 py-5 font-serif text-[15.5px] leading-[1.8] whitespace-pre-wrap">
-                {(() => {
-                  const parts: React.ReactNode[] = []
-                  let at = 0
-                  for (const s of spans) {
-                    if (s.start > at) parts.push(source.content.slice(at, s.start))
-                    parts.push(
-                      <mark key={s.ev.id} id={`hl-${s.ev.id}`} tabIndex={0}
-                        onClick={() => { setTrace(s.ev.id); go({ ...nav, view: 'workspace', sourceId: source.id, focusEvidenceId: s.ev.id }) }}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { setTrace(s.ev.id); go({ ...nav, view: 'workspace', sourceId: source.id, focusEvidenceId: s.ev.id }) } }}
-                        className={cx(markClass(s.ev), s.ev.id === focusId && 'hl-focus')}>
-                        {source.content.slice(s.start, s.end)}
-                      </mark>,
-                    )
-                    at = s.end
-                  }
-                  parts.push(source.content.slice(at))
-                  return parts
-                })()}
-                {sel && (
-                  <button onMouseDown={(e) => e.preventDefault()} onClick={addSelection}
-                    className="absolute z-10 inline-flex -translate-x-1/2 -translate-y-[calc(100%+6px)] items-center gap-1.5 rounded-md bg-ink px-2.5 py-1.5 font-sans text-xs font-medium text-white shadow-lg"
-                    style={{ left: sel.x, top: sel.y }}>
-                    <Plus size={13} /> {t.addEv}
-                  </button>
-                )}
-              </div>
+              <SourceReader source={source} markClass={markClass} focusId={focusId}
+                onMark={(ev) => { setTrace(ev.id); go({ ...nav, view: 'workspace', sourceId: source.id, focusEvidenceId: ev.id }) }}
+                onAdded={(id) => { setTrace(id); go({ ...nav, view: 'workspace', sourceId: source.id, focusEvidenceId: id }) }}
+                className="min-h-0 flex-1 overflow-y-auto px-6 py-5" />
             </>
           )}
         </article>
@@ -420,7 +433,10 @@ export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
                 {!p.insights.length && (
                   <li className="p-5 text-center text-[13px] text-muted">
                     <p className="mb-3">{T.steps.workspace.guide}</p>
-                    <Button variant="primary" onClick={draft}><Wand2 size={14} />{t.draft}</Button>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <Button onClick={() => setManual(true)}><PenLine size={14} />{t.manual}</Button>
+                      <Button variant="primary" onClick={draft}><Wand2 size={14} />{t.draft}</Button>
+                    </div>
                   </li>
                 )}
                 {insights.map((i) => {
@@ -446,6 +462,8 @@ export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
           )}
         </aside>
       </div>
+      {needAI && <NeedAIDialog onClose={() => setNeedAI(false)} onManual={() => setManual(true)} onConnect={() => ai.insights()} />}
+      {manual && <ManualInsightDialog onClose={() => setManual(false)} onCreated={(id) => pickInsight(id)} />}
       {insufficient && <InsufficientDialog q={insufficient.q} people={insufficient.people} onAnyway={ai.insights} onClose={() => setInsufficient(null)} />}
     </>
   )

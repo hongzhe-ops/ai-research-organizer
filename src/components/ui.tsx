@@ -1,4 +1,4 @@
-import { Check, FileText, Globe, MessageSquareQuote, Pencil, Signature, Type, X } from 'lucide-react'
+import { Binoculars, Check, FileText, Globe, MessageSquareQuote, Pencil, Signature, Type, X } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
 import { useT } from '../store'
 import type { Origin, SourceType, Status } from '../types'
@@ -29,6 +29,7 @@ export function StatusChip({ status, origin }: { status: Status; origin?: Origin
 
 export function SourceIcon({ type, size = 14 }: { type: SourceType; size?: number }) {
   if (type === 'interview') return <MessageSquareQuote size={size} />
+  if (type === 'observation') return <Binoculars size={size} />
   if (type === 'pdf') return <FileText size={size} />
   if (type === 'web') return <Globe size={size} />
   return <Type size={size} />
@@ -79,6 +80,17 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
       {children}
       {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}
     </label>
+  )
+}
+
+/** A labelled group of buttons. Not a <label>, which would swallow the buttons' own names. */
+export function FieldGroup({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+  return (
+    <fieldset className="mb-4">
+      <legend className="mb-1.5 block text-[13px] font-medium">{label}</legend>
+      {children}
+      {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}
+    </fieldset>
   )
 }
 

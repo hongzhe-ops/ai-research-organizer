@@ -16,12 +16,14 @@ export function ExportView() {
   const people = new Set(p.sources.map((s) => s.participant).filter(Boolean)).size
   const usedQuotes = new Set(decided.flatMap((i) => [...i.supporting, ...i.counter])).size
   const decisions = p.log.filter((l) => l.actor === 'researcher').length
+  const usedAI = p.evidence.some((e) => e.origin === 'ai') || p.themes.some((x) => x.origin === 'ai') || p.insights.some((i) => i.origin === 'ai')
+  const note = usedAI ? t.aiNote : t.manualNote
   const today = new Intl.DateTimeFormat(T.date, { dateStyle: 'long' }).format(new Date())
   const covText = (ids: string[]) => { const c = coverage(p, ids); return `${W.saidBy} ${W.participants(c.people, c.totalPeople)}${W.partWord ? ` ${W.partWord}` : ''} · ${W.sources(c.sources)}` }
 
   const markdown = () => {
     const L: string[] = [`# ${p.name}`, '', `**${t.research}${T.common.colon}**${p.question}`, `*${t.generated}${T.common.colon}${today}*`, '', `## ${t.method}`, '',
-      t.methodBody(p.sources.length, people, usedQuotes, p.intercepted.length, decisions), '', `> ${t.aiNote}`, '', `## ${t.findings}`, '']
+      t.methodBody(p.sources.length, people, usedQuotes, p.intercepted.length, decisions), '', `> ${note}`, '', `## ${t.findings}`, '']
     decided.forEach((i, k) => {
       L.push(`### ${k + 1}. ${i.statement}`, '', `*${covText(i.supporting)}*`, '')
       if (i.decisionNote) L.push(`${W.decisionNote}${T.common.colon}${i.decisionNote}`, '')
@@ -62,7 +64,7 @@ export function ExportView() {
 
           <h2 className="mt-8 border-b border-line pb-2 text-[16px] font-semibold">{t.method}</h2>
           <p className="mt-3 text-[14px] leading-relaxed">{t.methodBody(p.sources.length, people, usedQuotes, p.intercepted.length, decisions)}</p>
-          <p className="mt-2 text-[13px] leading-relaxed text-muted">{t.aiNote}</p>
+          <p className="mt-2 text-[13px] leading-relaxed text-muted">{note}</p>
 
           <h2 className="mt-8 border-b border-line pb-2 text-[16px] font-semibold">{t.findings}</h2>
           <ol className="mt-4 space-y-8">

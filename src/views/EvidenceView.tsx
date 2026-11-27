@@ -1,7 +1,8 @@
-import { CheckCheck, ShieldX } from 'lucide-react'
+import { BookOpenText, CheckCheck, ShieldX } from 'lucide-react'
 import { useState } from 'react'
 import { EvidenceCard } from '../components/EvidenceCard'
 import { StepGuide } from '../components/Flow'
+import { ReaderDialog } from '../components/ReaderDialog'
 import { Button, Empty, SourceIcon, cx } from '../components/ui'
 import { useStore, useT } from '../store'
 import type { Status } from '../types'
@@ -47,8 +48,10 @@ function Intercepted() {
 }
 
 export function EvidenceView() {
-  const { project: p, go, confirmAllInSource } = useStore()
-  const t = useT().evidence
+  const { project: p, confirmAllInSource } = useStore()
+  const T = useT()
+  const t = T.evidence
+  const [reading, setReading] = useState<string | null>(null)
   const toReview = p.evidence.filter((e) => e.status === 'suggested').length
   const [filter, setFilter] = useState<Filter>(toReview ? 'review' : 'all')
   const f = FILTERS.find((x) => x.id === filter)!
@@ -56,6 +59,17 @@ export function EvidenceView() {
   return (
     <>
       <StepGuide step="evidence" />
+      {reading && <ReaderDialog sourceId={reading} onClose={() => setReading(null)} />}
+      {p.sources.length > 0 && (
+        <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-white px-4 py-3">
+          <span className="mr-1 inline-flex items-center gap-1.5 text-[13px] font-medium"><BookOpenText size={14} />{T.reader.open}</span>
+          {p.sources.map((s) => (
+            <button key={s.id} onClick={() => setReading(s.id)} className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-[13px] hover:border-ink hover:text-ink">
+              <SourceIcon type={s.type} size={12} />{s.title}
+            </button>
+          ))}
+        </div>
+      )}
       <Intercepted />
       <div role="tablist" className="mb-5 flex flex-wrap gap-1.5">
         {FILTERS.map((x) => (
@@ -67,7 +81,8 @@ export function EvidenceView() {
       </div>
 
       {p.evidence.filter((e) => f.match(e.status)).length === 0 ? (
-        <Empty title={filter === 'review' ? t.allDoneT : t.noneT} body={filter === 'review' ? t.allDoneB : t.noneB} />
+        <Empty title={filter === 'review' ? t.allDoneT : t.noneT} body={filter === 'review' ? t.allDoneB : t.noneB}
+ />
       ) : (
         <div className="space-y-8">
           {p.sources.map((s) => {
@@ -77,9 +92,10 @@ export function EvidenceView() {
             return (
               <section key={s.id}>
                 <div className="mb-3 flex items-center gap-3">
-                  <button onClick={() => go({ view: 'workspace', sourceId: s.id })} className="flex items-center gap-2 text-[13px] font-semibold hover:text-ink">
-                    <SourceIcon type={s.type} /> {s.participant || s.title} <span className="font-normal text-muted">{list.length}</span>
+                  <button onClick={() => setReading(s.id)} className="flex items-center gap-2 text-left text-[13px] font-semibold hover:text-ink">
+                    <SourceIcon type={s.type} /> {s.title}{s.participant && <span className="font-normal text-muted">{s.participant}</span>} <span className="font-normal text-muted">{list.length}</span>
                   </button>
+                  <Button size="sm" variant="ghost" onClick={() => setReading(s.id)}><BookOpenText size={13} />{T.reader.open}</Button>
                   {drafts > 1 && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => confirmAllInSource(s.id)}><CheckCheck size={14} />{t.confirmAll(drafts)}</Button>}
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">

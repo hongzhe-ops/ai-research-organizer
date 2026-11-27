@@ -2,7 +2,7 @@ import { ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useStore, useT } from '../store'
 import type { Provider } from '../types'
-import { Button, Dialog, Field, inputCls } from './ui'
+import { Button, Dialog, Field, FieldGroup, inputCls } from './ui'
 
 const DEFAULT_MODEL: Record<Provider, string> = { anthropic: 'claude-sonnet-5-5', openai: 'gpt-5-mini' }
 
@@ -31,7 +31,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
       </Field>
 
       <h3 className="mt-6 mb-3 text-[13px] font-semibold text-muted">{t.ai}</h3>
-      <Field label={t.provider}>
+      <FieldGroup label={t.provider}>
         <div className="flex gap-2">
           {(['anthropic', 'openai'] as Provider[]).map((p) => (
             <button key={p} onClick={() => { setProvider(p); setModel(DEFAULT_MODEL[p]) }}
@@ -40,7 +40,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
             </button>
           ))}
         </div>
-      </Field>
+      </FieldGroup>
       <Field label={t.key}>
         <input className={inputCls} type="password" autoComplete="off" placeholder={provider === 'anthropic' ? 'sk-ant-…' : 'sk-…'} value={apiKey} onChange={(e) => setKey(e.target.value)} />
       </Field>

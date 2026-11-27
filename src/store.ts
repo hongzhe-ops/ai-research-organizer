@@ -32,7 +32,7 @@ interface State {
   notify: (text?: string, tone?: Notice['tone'], action?: Notice['action']) => void
   setSettings: (s: Partial<Settings>) => void
   loadDemo: () => void
-  startEmpty: () => void
+  startEmpty: (name?: string, question?: string) => void
   renameProject: (name: string, question: string) => void
   log: (actor: Origin, text: string, target?: LogEntry['target']) => void
 
@@ -58,6 +58,8 @@ interface State {
   editInsight: (id: string, statement: string, reason?: string) => void
   flipStance: (insightId: string, evidenceId: string) => void
   unlinkEvidence: (insightId: string, evidenceId: string) => void
+  addInsight: (statement: string, themeIds: string[]) => string
+  linkEvidence: (insightId: string, evidenceId: string, stance: 'support' | 'counter') => void
 
   clearNew: () => void
   setLastRun: (r?: RunSummary) => void
@@ -88,7 +90,10 @@ export const useStore = create<State>()(
         notify: (text, tone = 'ok', action) => set({ notice: text ? { text, tone, action } : undefined }),
         setSettings: (s) => set((st) => ({ settings: { ...st.settings, ...s } })),
         loadDemo: () => set((s) => ({ project: demoProject(s.lang), reviewed: [], nav: { view: 'overview' } })),
-        startEmpty: () => set((s) => ({ project: emptyProject(s.lang), reviewed: [], nav: { view: 'sources' } })),
+        startEmpty: (name, question) => {
+          set((s) => ({ project: { ...emptyProject(s.lang), ...(name ? { name } : {}), ...(question ? { question } : {}) }, reviewed: [], nav: { view: 'sources' } }))
+          if (name) log('researcher', T().newStudy(name))
+        },
         renameProject: (name, question) => patch(() => ({ name, question })),
         log,
 
@@ -238,6 +243,26 @@ export const useStore = create<State>()(
           log('researcher', T().unlinked, { kind: 'insight', id: iid })
         },
 
+        addInsight: (statement, themeIds) => {
+          const id = uid('i')
+          const p = get().project
+          const ok = new Set(p.evidence.filter((e) => e.status === 'confirmed' || e.status === 'edited').map((e) => e.id))
+          const supporting = [...new Set(p.themes.filter((t) => themeIds.includes(t.id)).flatMap((t) => t.evidenceIds).filter((x) => ok.has(x)))]
+          patch((p) => ({ insights: [...p.insights, { id, statement, themeIds, supporting, counter: [], origin: 'researcher', status: 'confirmed' }] }))
+          log('researcher', T().addedIn(short(statement)), { kind: 'insight', id })
+          return id
+        },
+        linkEvidence: (iid, eid, stance) => {
+          patch((p) => ({
+            insights: p.insights.map((i) => {
+              if (i.id !== iid) return i
+              const supporting = i.supporting.filter((x) => x !== eid)
+              const counter = i.counter.filter((x) => x !== eid)
+              return stance === 'support' ? { ...i, supporting: [...supporting, eid], counter } : { ...i, supporting, counter: [...counter, eid] }
+            }),
+          }))
+          log('researcher', T().linked, { kind: 'insight', id: iid })
+        },
         clearNew: () => patch((p) => ({ themes: p.themes.map((t) => (t.isNew ? { ...t, isNew: false } : t)), insights: p.insights.map((i) => (i.isNew ? { ...i, isNew: false } : i)), lastRun: undefined })),
         setLastRun: (lastRun) => patch(() => ({ lastRun })),
         replaceAI: (ch) => patch(() => ({ ...ch })),

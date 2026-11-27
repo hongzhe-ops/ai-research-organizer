@@ -2,15 +2,17 @@ import { Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useStore, useT } from '../store'
 import type { SourceType } from '../types'
-import { Button, Dialog, Field, SourceIcon, cx, inputCls } from './ui'
+import { Button, Dialog, Field, FieldGroup, SourceIcon, cx, inputCls } from './ui'
 
 type Tab = 'text' | 'pdf' | 'web'
 
 export function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported: (id: string) => void }) {
-  const addSource = useStore((s) => s.addSource)
+  const { addSource, startEmpty, project } = useStore()
   const T = useT()
   const t = T.importer
   const [tab, setTab] = useState<Tab>('text')
+  const [kind, setKind] = useState<'interview' | 'observation' | 'text'>('interview')
+  const [target, setTarget] = useState<'new' | 'demo'>('new')
   const [title, setTitle] = useState('')
   const [participant, setParticipant] = useState('')
   const [content, setContent] = useState('')
@@ -45,7 +47,8 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
     if (!title.trim()) return setError(t.errTitle)
     if (content.trim().length < 20) return setError(t.errText)
     if (tab === 'web' && url && !/^https?:\/\//.test(url)) return setError(t.errUrl)
-    const type: SourceType = tab === 'web' ? 'web' : tab === 'pdf' ? 'pdf' : participant ? 'interview' : 'text'
+    const type: SourceType = tab === 'web' ? 'web' : tab === 'pdf' ? 'pdf' : kind
+    if (project.isDemo && target === 'new') startEmpty(T.settings.untitled)
     const id = addSource({ title: title.trim(), type, participant: participant.trim() || undefined, url: url.trim() || undefined, content: content.replace(/\r\n/g, '\n').trim() })
     onImported(id)
     onClose()
@@ -67,6 +70,31 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
           </button>
         ))}
       </div>
+
+      {project.isDemo && (
+        <fieldset className="mb-5 rounded-lg border border-warn/30 bg-warn-soft p-3">
+          <legend className="px-1 text-[13px] font-medium text-warn">{t.demoT}</legend>
+          {(['new', 'demo'] as const).map((v) => (
+            <label key={v} className="mt-1 flex cursor-pointer items-center gap-2 text-[13px]">
+              <input type="radio" name="target" checked={target === v} onChange={() => setTarget(v)} className="accent-[#1E3A8A]" />
+              {v === 'new' ? t.demoNew : t.demoAdd}
+            </label>
+          ))}
+        </fieldset>
+      )}
+
+      {tab === 'text' && (
+        <FieldGroup label={t.kind}>
+          <div className="flex gap-1.5">
+            {(['interview', 'observation', 'text'] as const).map((k) => (
+              <button key={k} type="button" onClick={() => setKind(k)} aria-pressed={kind === k}
+                className={cx('inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[13px]', kind === k ? 'border-ink bg-ink-soft font-medium text-ink' : 'border-line')}>
+                <SourceIcon type={k} size={13} />{T.type[k]}
+              </button>
+            ))}
+          </div>
+        </FieldGroup>
+      )}
 
       <div className="grid gap-x-4 sm:grid-cols-2">
         <Field label={t.titleF}><input className={inputCls} value={title} onChange={(e) => { setTitle(e.target.value); setError('') }} placeholder={t.titlePh} /></Field>

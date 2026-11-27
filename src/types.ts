@@ -1,4 +1,4 @@
-export type SourceType = 'interview' | 'pdf' | 'web' | 'text'
+export type SourceType = 'interview' | 'observation' | 'pdf' | 'web' | 'text'
 
 /** Who produced an item, and what the researcher decided about it. */
 export type Status = 'suggested' | 'confirmed' | 'edited' | 'rejected'
