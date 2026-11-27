@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { demoProject, emptyProject } from './demo'
-import { defaultLang, dict, type Lang } from './i18n'
-import type { Evidence, Insight, LogEntry, Origin, Project, RunSummary, Settings, Source, Status, Theme, View } from './types'
+import { defaultLang, dict, type Dict, type Lang } from './i18n'
+import type { Evidence, Insight, LogEntry, Origin, Project, RunSummary, Settings, Source, SourceType, Status, Theme, View } from './types'
 
 export const uid = (p: string) => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 
@@ -270,12 +270,12 @@ export const useStore = create<State>()(
     },
     {
       name: 'aro-v1',
-      version: 3,
+      version: 4,
       partialize: (s) => ({ project: s.project, settings: s.settings, lang: s.lang }),
       migrate: (old, version) => {
         const st = old as { project: Project; settings: Settings; lang?: Lang }
         const lang = st.lang || defaultLang()
-        if (version < 3) {
+        if (version < 4) {
           const project = st.project?.isDemo ? demoProject(lang) : { ...st.project, intercepted: st.project?.intercepted || [] }
           return { ...st, lang, project }
         }
@@ -291,7 +291,17 @@ export function coverage(p: Project, ids: string[]) {
   const srcs = new Set(ev.map((e) => e.sourceId))
   const people = new Set(ev.map((e) => p.sources.find((s) => s.id === e.sourceId)?.participant).filter(Boolean))
   const totalPeople = new Set(p.sources.map((s) => s.participant).filter(Boolean)).size
-  return { quotes: ev.length, sources: srcs.size, people: people.size, totalPeople }
+  return { quotes: ev.length, sources: srcs.size, people: people.size, totalPeople, sourceIds: [...srcs] }
+}
+
+/** "Interview ×2, Paper ×1" for a set of sources. */
+export function typeSummary(p: Project, sourceIds: string[], T: Dict) {
+  const counts = new Map<SourceType, number>()
+  for (const id of sourceIds) {
+    const s = p.sources.find((x) => x.id === id)
+    if (s) counts.set(s.type, (counts.get(s.type) || 0) + 1)
+  }
+  return [...counts].map(([type, n]) => T.workspace.typeCount(T.type[type], n)).join(T.workspace.listSep)
 }
 
 /** Flags that call for human attention on an insight. */
@@ -343,3 +353,8 @@ export function stepDone(p: Project, step: Step) {
     case 'export': return false
   }
 }
+
+/** Short label for where a quote came from: the person, else the citation, else the title. */
+export const sourceLabel = (s?: Source) => (s ? s.participant || s.citation || s.title : '')
+/** "Paper · Chen & Li, 2024" */
+export const sourceMeta = (s: Source, T: Dict) => [T.type[s.type], s.participant, s.citation].filter(Boolean).join(' · ')

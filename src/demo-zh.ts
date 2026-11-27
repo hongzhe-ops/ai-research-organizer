@@ -74,6 +74,16 @@ export const sourcesZh: Source[] = [
 回复 2：我把所有评论放进一个共享文档，用红色标出冲突。把它们并排摆在一起，客户通常会自己理清楚。
 回复 3：反馈互相矛盾，通常说明客户自己还不清楚想要什么。我会回到需求简报。`,
   },
+  {
+    id: 's7', type: 'paper', title: '论文摘录：创意自由职业中的反馈渠道', citation: '虚构研究，2025（仅用于演示）', addedAt: T0 + DAY + 600_000,
+    content: `摘要节选：本研究分析了 120 位自由设计师的项目记录。反馈分散在三个以上渠道的项目，平均修改轮次比集中在单一渠道的项目多 1.8 轮。
+讨论节选：然而，渠道数量本身并不能完全解释这种差异。在事先约定反馈规则的项目中，即使使用多个渠道，修改轮次也没有显著增加。`,
+  },
+  {
+    id: 's8', type: 'review', title: '某反馈工具的应用商店评论', citation: 'App Store（虚构）', addedAt: T0 + DAY + 900_000,
+    content: `★★☆☆☆ 客户根本不愿意注册，最后还是回到微信。
+★★★★☆ 评论和版本放在一起很方便，就是对小客户来说太复杂。`,
+  },
 ]
 
 type S = 'suggested' | 'confirmed' | 'edited' | 'rejected'
@@ -101,36 +111,39 @@ export const evZh: Array<[string, string, string, S, string, string?]> = [
   ['e21', 's6', '我觉得自己像个裁判，而不是设计师。', 'confirmed', '解决冲突被视为设计师角色之外的事。'],
   ['e22', 's6', '我会让他们在项目开始前指定一个拍板的人。', 'confirmed', '通过流程而不是可见性来解决冲突。'],
   ['e23', 's6', '把它们并排摆在一起，客户通常会自己理清楚。', 'suggested', '冲突一旦可见，客户会自己解决。'],
+  ['e26', 's7', '反馈分散在三个以上渠道的项目，平均修改轮次比集中在单一渠道的项目多 1.8 轮。', 'confirmed', '为渠道分散的代价提供了量化支持。'],
+  ['e27', 's7', '在事先约定反馈规则的项目中，即使使用多个渠道，修改轮次也没有显著增加。', 'confirmed', '事先约定规则可以抵消渠道分散的影响。'],
+  ['e28', 's8', '客户根本不愿意注册，最后还是回到微信。', 'suggested', '客户拒绝需要注册的工具。'],
   ['e24', 's2', '我发了一个 Figma 原型链接。', 'rejected', '提到了分享用的工具。', '只是描述事实，没有值得追踪的态度或行为。'],
 ]
 export const extraEvZh = { quote: '现在每次确认我都截图。', note: '手动添加，AI 漏掉了这个变通做法。' }
 
 export const themesZh: Theme[] = [
-  { id: 't1', name: '反馈来自太多渠道', description: '邮件、聊天、语音和带标注的截图都在传递反馈，而它们彼此互不相通。', evidenceIds: ['e1', 'e2', 'e17', 'e11'], origin: 'ai', status: 'confirmed', locked: true },
+  { id: 't1', name: '反馈来自太多渠道', description: '邮件、聊天、语音和带标注的截图都在传递反馈，而它们彼此互不相通。', evidenceIds: ['e1', 'e2', 'e17', 'e11', 'e26'], origin: 'ai', status: 'confirmed', locked: true },
   { id: 't2', name: '设计师被迫给客户当裁判', description: '利益相关者意见不一时，由设计师来决定听谁的。', evidenceIds: ['e3', 'e4', 'e21', 'e20', 'e16'], origin: 'ai', status: 'confirmed', locked: false },
   { id: 't3', name: '确认记录是设计师的护身符', description: '设计师自己保存“谁批准了什么”的证据，以防发生争执。', evidenceIds: ['e12', 'e25', 'e13', 'e6'], origin: 'ai', status: 'suggested', locked: false },
-  { id: 't4', name: '客户只用自己熟悉的工具', description: '更好的工具只有在客户愿意用时才有帮助。', evidenceIds: ['e5', 'e8', 'e7'], origin: 'ai', status: 'suggested', locked: false },
-  { id: 't5', name: '早定规矩，避免反馈混乱', description: '在开工前约定好反馈的方式和渠道。', evidenceIds: ['e15', 'e22', 'e14'], origin: 'ai', status: 'edited', locked: false },
+  { id: 't4', name: '客户只用自己熟悉的工具', description: '更好的工具只有在客户愿意用时才有帮助。', evidenceIds: ['e5', 'e8', 'e7', 'e28'], origin: 'ai', status: 'suggested', locked: false },
+  { id: 't5', name: '早定规矩，避免反馈混乱', description: '在开工前约定好反馈的方式和渠道。', evidenceIds: ['e15', 'e22', 'e14', 'e27'], origin: 'ai', status: 'edited', locked: false },
   { id: 't6', name: '瓶颈在于清晰，而不是工作量', description: '设计师等待明确答复的时间，比修改本身还长。', evidenceIds: ['e10', 'e9'], origin: 'ai', status: 'suggested', locked: false },
 ]
 
 export const insightsZh: Insight[] = [
-  { id: 'i1', statement: '分散的反馈渠道制造了隐形的整理工作，设计师在开始设计之前就要先消化掉。', themeIds: ['t1', 't5'], supporting: ['e1', 'e2', 'e17', 'e11'], counter: ['e14', 'e15', 'e7'], origin: 'ai', status: 'confirmed', decisionNote: '保留，但反驳证据说明流程规则可以消除大部分这类工作。', versions: [{ statement: '反馈渠道分散是自由设计师浪费时间的主要原因。', at: T0 + DAY + 3_800_000, actor: 'ai' }] },
+  { id: 'i1', statement: '分散的反馈渠道制造了隐形的整理工作，设计师在开始设计之前就要先消化掉。', themeIds: ['t1', 't5'], supporting: ['e1', 'e2', 'e17', 'e11', 'e26'], counter: ['e14', 'e15', 'e7', 'e27'], origin: 'ai', status: 'confirmed', decisionNote: '保留，但反驳证据说明流程规则可以消除大部分这类工作。', versions: [{ statement: '反馈渠道分散是自由设计师浪费时间的主要原因。', at: T0 + DAY + 3_800_000, actor: 'ai' }] },
   { id: 'i2', statement: '设计师希望把冲突摆在客户面前，而不是替客户做决定。', themeIds: ['t2'], supporting: ['e20', 'e23', 'e4', 'e21'], counter: ['e22'], origin: 'ai', status: 'suggested' },
-  { id: 'i3', statement: '对自由设计师来说，清楚记录“谁批准了什么”比更快的修改工具更重要。', themeIds: ['t3'], supporting: ['e12', 'e25', 'e13', 'e6'], counter: ['e10'], origin: 'ai', status: 'suggested' },
+  { id: 'i3', statement: '对自由设计师来说，清楚记录“谁批准了什么”比更快的修改工具更重要。', themeIds: ['t3'], supporting: ['e12', 'e25', 'e13', 'e6'], counter: ['e10'], origin: 'ai', status: 'confirmed' },
   { id: 'i4', statement: '只有当分组理由可以被查看时，自动分组反馈才能被接受。', themeIds: [], supporting: ['e19', 'e18'], counter: [], origin: 'ai', status: 'suggested' },
   { id: 'i5', statement: '客户更喜欢直接在 Figma 里给反馈。', themeIds: ['t4'], supporting: ['e7'], counter: ['e5', 'e8'], origin: 'ai', status: 'rejected', decisionNote: '三次提及中有两次与之矛盾，只适用于熟悉科技工具的客户。' },
 ]
 
 export const logZh: LogEntry[] = [
-  { id: 'l1', at: T0 + DAY + 3_600_000, actor: 'ai', text: '从 6 份资料中提取了 24 条引语。另有 2 条与原文对不上，已拦截。' },
+  { id: 'l1', at: T0 + DAY + 3_600_000, actor: 'ai', text: '从 8 份资料中提取了 27 条引语。另有 2 条与原文对不上，已拦截。' },
   { id: 'l2', at: T0 + DAY + 3_700_000, actor: 'ai', text: '将证据分为 6 个主题。' },
   { id: 'l3', at: T0 + DAY + 3_800_000, actor: 'ai', text: '起草了 5 条洞察，附有支持和反驳证据。' },
   { id: 'l4', at: T0 + 2 * DAY, actor: 'researcher', text: '否决证据：“我发了一个 Figma 原型链接。”', target: { kind: 'evidence', id: 'e24' } },
   { id: 'l5', at: T0 + 2 * DAY + 60_000, actor: 'researcher', text: '手动添加证据：“现在每次确认我都截图。”', target: { kind: 'evidence', id: 'e25' } },
   { id: 'l6', at: T0 + 2 * DAY + 600_000, actor: 'researcher', text: '将主题重命名为“早定规矩，避免反馈混乱”。', target: { kind: 'theme', id: 't5' } },
   { id: 'l7', at: T0 + 2 * DAY + 900_000, actor: 'researcher', text: '确认并锁定主题“反馈来自太多渠道”。', target: { kind: 'theme', id: 't1' } },
-  { id: 'l8', at: T0 + 2 * DAY + 1_500_000, actor: 'researcher', text: '查看了 4 条支持引语和 3 条反驳引语后，确认了这条洞察。', target: { kind: 'insight', id: 'i1' } },
+  { id: 'l8', at: T0 + 2 * DAY + 1_500_000, actor: 'researcher', text: '查看了 5 条支持引语和 4 条反驳引语后，确认了这条洞察。', target: { kind: 'insight', id: 'i1' } },
   { id: 'l9', at: T0 + 2 * DAY + 1_800_000, actor: 'researcher', text: '否决洞察：“客户更喜欢直接在 Figma 里给反馈。”理由：三次提及中有两次与之矛盾。', target: { kind: 'insight', id: 'i5' } },
 ]
 

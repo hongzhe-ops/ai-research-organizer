@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react'
 import { Button } from '../components/ui'
-import { STEPS, stepDone, useStore, useT } from '../store'
+import { STEPS, stepDone, typeSummary, useStore, useT } from '../store'
 import type { Status, View } from '../types'
 
 function Breakdown({ items }: { items: Status[] }) {
@@ -31,7 +31,7 @@ export function OverviewView() {
   const T = useT()
   const t = T.overview
   const stages: Array<{ view: View; label: string; count: number; desc: string; statuses?: Status[] }> = [
-    { view: 'sources', label: T.steps.sources.label, count: p.sources.length, desc: t.srcDesc(p.sources.filter((s) => s.participant).length, p.sources.filter((s) => !s.participant).length) },
+    { view: 'sources', label: T.steps.sources.label, count: p.sources.length, desc: t.srcDesc(typeSummary(p, p.sources.map((s) => s.id), T)) },
     { view: 'evidence', label: T.steps.evidence.label, count: p.evidence.length, desc: t.evDesc, statuses: p.evidence.map((e) => e.status) },
     { view: 'themes', label: T.steps.themes.label, count: p.themes.length, desc: t.thDesc, statuses: p.themes.map((x) => x.status) },
     { view: 'workspace', label: T.steps.workspace.label, count: p.insights.length, desc: t.inDesc, statuses: p.insights.map((i) => i.status) },
@@ -71,7 +71,7 @@ export function OverviewView() {
                 <p className="mt-1 mb-4 text-xs text-muted">{s.desc}</p>
                 {s.statuses ? <Breakdown items={s.statuses} /> : (
                   <ul className="space-y-1 text-xs text-muted">
-                    {p.sources.slice(0, 3).map((x) => <li key={x.id} className="truncate">{x.participant || x.title}</li>)}
+                    {p.sources.slice(0, 3).map((x) => <li key={x.id} className="truncate">{x.title}</li>)}
                     {p.sources.length > 3 && <li>{t.more(p.sources.length - 3)}</li>}
                   </ul>
                 )}

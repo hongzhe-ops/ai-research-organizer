@@ -74,6 +74,16 @@ Reply 1: I make them nominate one decision-maker before the project starts. Feed
 Reply 2: I put all comments in a shared doc and highlight the conflicts in red. Seeing them side by side usually makes the client sort it out themselves.
 Reply 3: Contradictory feedback usually means the client doesn't know what they want yet. I go back to the brief.`,
   },
+  {
+    id: 's7', type: 'paper', title: 'Paper excerpt: feedback channels in creative freelancing', citation: 'Fictional study, 2025 (demo only)', addedAt: T0 + DAY + 600_000,
+    content: `Abstract (excerpt): This study analysed project records from 120 freelance designers. Projects where feedback was spread across three or more channels needed on average 1.8 more revision rounds than projects using a single channel.
+Discussion (excerpt): However, the number of channels alone does not explain the difference. In projects that agreed feedback rules in advance, using several channels did not significantly increase revision rounds.`,
+  },
+  {
+    id: 's8', type: 'review', title: 'App store reviews of a feedback tool', citation: 'App Store (fictional)', addedAt: T0 + DAY + 900_000,
+    content: `★★☆☆☆ My clients refused to sign up, so we ended up back on WhatsApp.
+★★★★☆ Having comments next to versions is great, but it's too complex for small clients.`,
+  },
 ]
 
 type E = [id: string, sourceId: string, quote: string, status: Evidence['status'], rationale: string, note?: string]
@@ -101,6 +111,9 @@ const ev: E[] = [
   ['e21', 's6', 'I feel like a referee, not a designer.', 'confirmed', 'Conflict resolution is felt as outside the designer role.'],
   ['e22', 's6', 'I make them nominate one decision-maker before the project starts.', 'confirmed', 'Resolves conflict through process rather than visibility.'],
   ['e23', 's6', 'Seeing them side by side usually makes the client sort it out themselves.', 'suggested', 'Visible conflicts get resolved by clients.'],
+  ['e26', 's7', 'Projects where feedback was spread across three or more channels needed on average 1.8 more revision rounds than projects using a single channel.', 'confirmed', 'Quantitative support for the cost of fragmented channels.'],
+  ['e27', 's7', 'In projects that agreed feedback rules in advance, using several channels did not significantly increase revision rounds.', 'confirmed', 'Agreed rules cancel out the channel effect.'],
+  ['e28', 's8', 'My clients refused to sign up, so we ended up back on WhatsApp.', 'suggested', 'Clients reject tools that need an account.'],
   ['e24', 's2', 'I shared a Figma prototype link.', 'rejected', 'Mentions the tool used for sharing.', 'Descriptive only, no attitude or behaviour worth tracking.'],
 ]
 const evidence: Evidence[] = ev.map(([id, sourceId, quote, status, rationale, note]) => ({
@@ -112,18 +125,18 @@ evidence.push({
 })
 
 const themes: Theme[] = [
-  { id: 't1', name: 'Feedback arrives through too many channels', description: 'Email, chat, voice notes and annotated screenshots all carry feedback, and none of them talk to each other.', evidenceIds: ['e1', 'e2', 'e17', 'e11'], origin: 'ai', status: 'confirmed', locked: true },
+  { id: 't1', name: 'Feedback arrives through too many channels', description: 'Email, chat, voice notes and annotated screenshots all carry feedback, and none of them talk to each other.', evidenceIds: ['e1', 'e2', 'e17', 'e11', 'e26'], origin: 'ai', status: 'confirmed', locked: true },
   { id: 't2', name: 'Designers end up refereeing client conflicts', description: 'When stakeholders disagree, the designer is left to decide whose feedback wins.', evidenceIds: ['e3', 'e4', 'e21', 'e20', 'e16'], origin: 'ai', status: 'confirmed', locked: false },
   { id: 't3', name: 'A record of approval protects the designer', description: 'Designers keep their own evidence of who approved what, to defend against disputes.', evidenceIds: ['e12', 'e25', 'e13', 'e6'], origin: 'ai', status: 'suggested', locked: false },
-  { id: 't4', name: 'Clients stick to tools they already use', description: 'A better tool only helps if clients are willing to use it.', evidenceIds: ['e5', 'e8', 'e7'], origin: 'ai', status: 'suggested', locked: false },
-  { id: 't5', name: 'Rules set early prevent feedback chaos', description: 'Agreeing how and where feedback is given, before work begins.', evidenceIds: ['e15', 'e22', 'e14'], origin: 'ai', status: 'edited', locked: false },
+  { id: 't4', name: 'Clients stick to tools they already use', description: 'A better tool only helps if clients are willing to use it.', evidenceIds: ['e5', 'e8', 'e7', 'e28'], origin: 'ai', status: 'suggested', locked: false },
+  { id: 't5', name: 'Rules set early prevent feedback chaos', description: 'Agreeing how and where feedback is given, before work begins.', evidenceIds: ['e15', 'e22', 'e14', 'e27'], origin: 'ai', status: 'edited', locked: false },
   { id: 't6', name: 'Clarity, not effort, is the bottleneck', description: 'Designers wait longer for a clear answer than they spend making changes.', evidenceIds: ['e10', 'e9'], origin: 'ai', status: 'suggested', locked: false },
 ]
 
 const insights: Insight[] = [
   {
     id: 'i1', statement: 'Fragmented feedback channels create hidden admin work that designers absorb before any design happens.',
-    themeIds: ['t1', 't5'], supporting: ['e1', 'e2', 'e17', 'e11'], counter: ['e14', 'e15', 'e7'], origin: 'ai', status: 'confirmed',
+    themeIds: ['t1', 't5'], supporting: ['e1', 'e2', 'e17', 'e11', 'e26'], counter: ['e14', 'e15', 'e7', 'e27'], origin: 'ai', status: 'confirmed',
     decisionNote: 'Kept, but the counter-evidence shows process rules can remove most of this work.',
     versions: [{ statement: 'Fragmented feedback channels are the main reason freelance designers lose time.', at: T0 + DAY + 3_800_000, actor: 'ai' }],
   },
@@ -133,7 +146,7 @@ const insights: Insight[] = [
   },
   {
     id: 'i3', statement: 'A clear record of who approved what matters more to freelancers than faster revision tools.',
-    themeIds: ['t3'], supporting: ['e12', 'e25', 'e13', 'e6'], counter: ['e10'], origin: 'ai', status: 'suggested',
+    themeIds: ['t3'], supporting: ['e12', 'e25', 'e13', 'e6'], counter: ['e10'], origin: 'ai', status: 'confirmed',
   },
   {
     id: 'i4', statement: 'Automatic grouping of feedback is only acceptable if the reasoning behind it can be inspected.',
@@ -152,14 +165,14 @@ const intercepted: Intercepted[] = [
 ]
 
 const log: LogEntry[] = [
-  { id: 'l1', at: T0 + DAY + 3_600_000, actor: 'ai', text: 'Extracted 24 evidence quotes from 6 sources. Blocked 2 proposed quotes that did not match the source text.' },
+  { id: 'l1', at: T0 + DAY + 3_600_000, actor: 'ai', text: 'Extracted 27 evidence quotes from 8 sources. Blocked 2 proposed quotes that did not match the source text.' },
   { id: 'l2', at: T0 + DAY + 3_700_000, actor: 'ai', text: 'Grouped evidence into 6 themes.' },
   { id: 'l3', at: T0 + DAY + 3_800_000, actor: 'ai', text: 'Drafted 5 insights with supporting and counter evidence.' },
   { id: 'l4', at: T0 + 2 * DAY, actor: 'researcher', text: 'Rejected evidence: "I shared a Figma prototype link."', target: { kind: 'evidence', id: 'e24' } },
   { id: 'l5', at: T0 + 2 * DAY + 60_000, actor: 'researcher', text: 'Added evidence manually: "Now I screenshot every approval."', target: { kind: 'evidence', id: 'e25' } },
   { id: 'l6', at: T0 + 2 * DAY + 600_000, actor: 'researcher', text: 'Renamed theme to "Rules set early prevent feedback chaos".', target: { kind: 'theme', id: 't5' } },
   { id: 'l7', at: T0 + 2 * DAY + 900_000, actor: 'researcher', text: 'Confirmed and locked theme "Feedback arrives through too many channels".', target: { kind: 'theme', id: 't1' } },
-  { id: 'l8', at: T0 + 2 * DAY + 1_500_000, actor: 'researcher', text: 'Confirmed insight after reviewing 4 supporting and 3 counter quotes.', target: { kind: 'insight', id: 'i1' } },
+  { id: 'l8', at: T0 + 2 * DAY + 1_500_000, actor: 'researcher', text: 'Confirmed insight after viewing 5 supporting and 4 challenging quotes.', target: { kind: 'insight', id: 'i1' } },
   { id: 'l9', at: T0 + 2 * DAY + 1_800_000, actor: 'researcher', text: 'Rejected insight: "Clients prefer giving feedback directly in Figma." Reason: Contradicted by two of three mentions.', target: { kind: 'insight', id: 'i5' } },
 ]
 

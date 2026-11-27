@@ -1,6 +1,6 @@
 import { PanelsTopLeft } from 'lucide-react'
 import { useState } from 'react'
-import { useStore, useT } from '../store'
+import { sourceMeta, useStore, useT } from '../store'
 import { SourceReader } from './SourceReader'
 import { Button, Dialog, SourceIcon } from './ui'
 
@@ -15,8 +15,7 @@ export function ReaderDialog({ sourceId, onClose }: { sourceId: string; onClose:
   return (
     <Dialog title={source.title} onClose={onClose} width={780}>
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-        <span className="inline-flex items-center gap-1"><SourceIcon type={source.type} size={12} />{T.type[source.type]}</span>
-        {source.participant && <span>{source.participant}</span>}
+        <span className="inline-flex items-center gap-1"><SourceIcon type={source.type} size={12} />{sourceMeta(source, T)}</span>
         <span>{T.sources.quotes(n)}</span>
       </div>
       <p className="mb-3 rounded-md bg-ink-soft px-3 py-2 text-[13px] text-ink">{T.reader.hint}</p>

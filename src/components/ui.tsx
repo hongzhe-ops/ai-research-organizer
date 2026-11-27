@@ -1,4 +1,4 @@
-import { Binoculars, Check, FileText, Globe, MessageSquareQuote, Pencil, Signature, Type, X } from 'lucide-react'
+import { Binoculars, BookOpen, Check, ClipboardList, FileText, Globe, MessageSquareQuote, Pencil, Signature, Star, Type, X } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
 import { useT } from '../store'
 import type { Origin, SourceType, Status } from '../types'
@@ -30,6 +30,9 @@ export function StatusChip({ status, origin }: { status: Status; origin?: Origin
 export function SourceIcon({ type, size = 14 }: { type: SourceType; size?: number }) {
   if (type === 'interview') return <MessageSquareQuote size={size} />
   if (type === 'observation') return <Binoculars size={size} />
+  if (type === 'paper') return <BookOpen size={size} />
+  if (type === 'survey') return <ClipboardList size={size} />
+  if (type === 'review') return <Star size={size} />
   if (type === 'pdf') return <FileText size={size} />
   if (type === 'web') return <Globe size={size} />
   return <Type size={size} />

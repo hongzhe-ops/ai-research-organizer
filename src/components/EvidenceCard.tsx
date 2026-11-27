@@ -1,6 +1,6 @@
 import { Check, MessageSquarePlus, RotateCcw, X } from 'lucide-react'
 import { useState } from 'react'
-import { useStore, useT } from '../store'
+import { sourceLabel, useStore, useT } from '../store'
 import type { Evidence } from '../types'
 import { Button, StatusChip, cardClass, cx, inputCls } from './ui'
 
@@ -18,7 +18,7 @@ export function EvidenceCard({ e, compact, actions = true, tone }: { e: Evidence
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
         <button onClick={() => go({ view: 'workspace', sourceId: e.sourceId, focusEvidenceId: e.id })}
           className="text-left text-xs text-muted underline decoration-line underline-offset-2 hover:text-ink hover:decoration-ink" title={T.openSource}>
-          {src?.participant || src?.title}
+          {sourceLabel(src)}
         </button>
         {!compact && <StatusChip status={e.status} origin={e.origin} />}
       </div>

@@ -5,7 +5,7 @@ import { StepGuide } from '../components/Flow'
 import { ImportDialog } from '../components/ImportDialog'
 import { ReaderDialog } from '../components/ReaderDialog'
 import { Button, Dialog, Empty, SourceIcon } from '../components/ui'
-import { useStore, useT } from '../store'
+import { sourceMeta, useStore, useT } from '../store'
 import type { Source } from '../types'
 
 function DeleteDialog({ source, onClose }: { source: Source; onClose: () => void }) {
@@ -17,7 +17,7 @@ function DeleteDialog({ source, onClose }: { source: Source; onClose: () => void
   const insights = p.insights.filter((i) => i.status !== 'rejected' && [...i.supporting, ...i.counter].some((e) => ids.has(e)))
   return (
     <Dialog title={t.impactT} onClose={onClose}>
-      <p className="mb-1 text-[14px] font-medium">{source.title}{source.participant && <span className="font-normal text-muted"> · {source.participant}</span>}</p>
+      <p className="mb-1 text-[14px] font-medium">{source.title}{(source.participant || source.citation) && <span className="font-normal text-muted"> · {source.participant || source.citation}</span>}</p>
       {themes.length || insights.length ? (
         <>
           <p className="text-[13px] text-muted">{t.impactB(ids.size, themes.length, insights.length)}</p>
@@ -57,7 +57,7 @@ export function SourcesView({ ai }: { ai: ReturnType<typeof useAI> }) {
                 <span className="mt-0.5 rounded-md bg-graphite-soft p-1.5 text-muted"><SourceIcon type={s.type} size={15} /></span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[14px] font-semibold" title={s.title}>{s.title}</p>
-                  <p className="truncate text-xs text-muted">{T.type[s.type]}{s.participant ? ` · ${s.participant}` : ''} · {t.quotes(count(s.id))}</p>
+                  <p className="truncate text-xs text-muted">{sourceMeta(s, T)} · {t.quotes(count(s.id))}</p>
                 </div>
                 <button aria-label={t.del} onClick={() => setDeleting(s)} className="rounded p-1 text-muted hover:bg-graphite-soft hover:text-counter"><Trash2 size={14} /></button>
               </div>

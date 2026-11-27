@@ -7,7 +7,7 @@ import { EvidenceCard } from '../components/EvidenceCard'
 import { NewBadge, RunBanner, StepGuide } from '../components/Flow'
 import { Button, Dialog, Field, FieldGroup, SourceIcon, StatusChip, cardClass, cx, inputCls } from '../components/ui'
 import { locate } from '../lib/text'
-import { coverage, flags, usage, useStore, useT } from '../store'
+import { coverage, flags, sourceLabel, sourceMeta, typeSummary, usage, useStore, useT } from '../store'
 import type { Evidence, Insight, Project } from '../types'
 
 /* ---------- helpers ---------- */
@@ -159,14 +159,18 @@ function Flags({ i }: { i: Insight }) {
 
 function CoverageLine({ i }: { i: Insight }) {
   const p = useStore((s) => s.project)
-  const t = useT().workspace
+  const T = useT()
+  const t = T.workspace
   const c = coverage(p, i.supporting)
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-      <span>{t.saidBy} <b className="font-medium text-text">{t.participants(c.people, c.totalPeople)}</b>{t.partWord && ` ${t.partWord}`} · {t.sources(c.sources)}</span>
-      <span className="flex items-center gap-1" aria-hidden="true">
-        {Array.from({ length: c.totalPeople }).map((_, k) => <span key={k} className={cx('h-1.5 w-3 rounded-full', k < c.people ? 'bg-ink' : 'bg-line')} />)}
-      </span>
+      {c.totalPeople > 0 && <>
+        <span>{t.saidBy} <b className="font-medium text-text">{t.participants(c.people, c.totalPeople)}</b>{t.partWord && ` ${t.partWord}`}</span>
+        <span className="flex items-center gap-1" aria-hidden="true">
+          {Array.from({ length: c.totalPeople }).map((_, k) => <span key={k} className={cx('h-1.5 w-3 rounded-full', k < c.people ? 'bg-ink' : 'bg-line')} />)}
+        </span>
+      </>}
+      <span>{t.fromSources(c.sources, typeSummary(p, c.sourceIds, T))}</span>
       {i.counter.length > 0 && <span className="text-counter">{t.challenging(i.counter.length)}</span>}
     </div>
   )
@@ -187,7 +191,7 @@ function EvidenceGroup({ insight, ids, stance, onLocate }: { insight: Insight; i
             <div key={e.id}>
               <button onClick={() => onLocate(e)} className={cx('w-full rounded-lg p-2.5 text-left transition-shadow hover:shadow-[0_0_0_1.5px_var(--color-ink)]', stance === 'counter' ? 'border border-counter/25 border-l-[3px] border-l-counter bg-counter-soft/50' : cardClass(e.status))}>
                 <span className="quote block text-[13.5px] leading-snug">“{e.quote}”</span>
-                <span className="mt-1 block text-[11px] text-muted">{src?.participant || src?.title}</span>
+                <span className="mt-1 block text-[11px] text-muted">{sourceLabel(src)}</span>
               </button>
               {insight.status !== 'rejected' && (
                 <div className="mt-0.5 flex gap-3 pl-1">
@@ -376,7 +380,7 @@ export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
                     <span className="mt-0.5 text-muted"><SourceIcon type={s.type} size={13} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13px] font-medium" title={s.title}>{s.title}</span>
-                      {s.participant && <span className="block truncate text-[11px] text-muted">{s.participant}</span>}
+                      {(s.participant || s.citation) && <span className="block truncate text-[11px] text-muted">{s.participant || s.citation}</span>}
                       {hits ? (
                         <span className="mt-0.5 flex gap-1.5 text-[11px]">
                           {hits.s > 0 && <span className="rounded bg-mark/70 px-1 text-[#5C4A00]">{hits.s}</span>}
@@ -398,7 +402,7 @@ export function WorkspaceView({ ai }: { ai: ReturnType<typeof useAI> }) {
               <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
                 <div className="min-w-0 flex-1">
                   <h2 className="truncate text-[14px] font-semibold">{source.title}</h2>
-                  <p className="text-xs text-muted">{T.type[source.type]}{source.participant ? ` · ${source.participant}` : ''}{h ? ` · ${t.hits(h.s, h.c)}` : ''}</p>
+                  <p className="text-xs text-muted">{sourceMeta(source, T)}{h ? ` · ${t.hits(h.s, h.c)}` : ''}</p>
                 </div>
                 {source.url && <a href={source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-ink hover:underline">{T.sources.openOriginal}<ExternalLink size={11} /></a>}
                 {insight && chain.length > 0 && (

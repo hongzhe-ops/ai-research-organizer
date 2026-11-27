@@ -8,15 +8,16 @@ const langRule = () => `\nWrite every rationale, name, description and statement
 
 /* ---------- 1. Evidence extraction ---------- */
 
-const EXTRACT_SYSTEM = `You help a qualitative researcher find evidence in research material.
+const EXTRACT_SYSTEM = `You help a researcher find evidence in research material of any kind: interviews, observation notes, paper or report excerpts, survey answers, user reviews, articles or notes.
 Return only quotes copied character-for-character from the source. Never paraphrase, merge or fix grammar.
-Choose passages that reveal behaviour, needs, pain points, workarounds, attitudes or contradictions.
-Skip interviewer questions and purely descriptive filler. Each quote should be one to three sentences.
+For first-hand material, choose passages that reveal behaviour, needs, pain points, workarounds, attitudes or contradictions.
+For papers, reports and articles, choose findings, claims, figures and limitations that bear on the research question.
+Skip interviewer questions, headings, references and filler. Each quote should be one to three sentences.
 Reply with JSON only: [{"quote": "...", "rationale": "why this matters, max 15 words"}]`
 
 export async function extractEvidence(settings: Settings, project: Project, source: Source, signal?: AbortSignal) {
   const user = `Research question: ${project.question || 'not specified'}
-Source: ${source.title}${source.participant ? ` (${source.participant})` : ''}
+Source: ${source.title} [type: ${source.type}]${source.participant ? ` (participant: ${source.participant})` : ''}${source.citation ? ` (${source.citation})` : ''}
 
 <source>
 ${source.content.slice(0, MAX_SOURCE_CHARS)}
@@ -92,7 +93,7 @@ Propose new themes for the evidence that is not covered by fixed themes.`
 const INSIGHT_SYSTEM = `You help a qualitative researcher draft insights from themed evidence.
 An insight is a single, specific, falsifiable statement about people (max 25 words), not a restated theme.
 For every insight list the evidence that supports it AND any evidence that challenges, limits or contradicts it.
-Actively look for counter-evidence. Do not overstate: if only one participant says something, say so in the wording.
+Actively look for counter-evidence. Do not overstate: if only one participant or one source says something, say so in the wording.\nEach quote is labelled with its source type. Distinguish first-hand evidence (interviews, observation, surveys, reviews) from secondary evidence (papers, articles), and do not present a single paper's claim as what users do.
 Only use ids that are given to you. Reply with JSON only:
 [{"statement": "...", "themeIds": ["..."], "supporting": ["evidence ids"], "counter": ["evidence ids"]}]`
 
@@ -100,7 +101,7 @@ export async function synthesizeInsights(settings: Settings, project: Project, s
   const ev = project.evidence.filter((e) => e.status !== 'rejected')
   const themes = project.themes.filter((t) => t.status !== 'rejected')
   const kept = project.insights.filter((i) => i.status !== 'suggested')
-  const who = (e: Evidence) => project.sources.find((s) => s.id === e.sourceId)?.participant || project.sources.find((s) => s.id === e.sourceId)?.title
+  const who = (e: Evidence) => { const s = project.sources.find((x) => x.id === e.sourceId); return s ? `${s.type}: ${s.participant || s.citation || s.title}` : '' }
   const user = `Research question: ${project.question || 'not specified'}
 
 Themes:

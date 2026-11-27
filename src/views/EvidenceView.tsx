@@ -37,7 +37,7 @@ function Intercepted() {
             return (
               <li key={x.id} className="rounded-lg bg-counter-soft/60 p-3">
                 <p className="quote text-[14px] text-muted line-through decoration-counter/50">“{x.quote}”</p>
-                <p className="mt-1 text-xs text-counter">{t.interceptedReason} · {s?.participant || s?.title}</p>
+                <p className="mt-1 text-xs text-counter">{t.interceptedReason} · {s?.title}</p>
               </li>
             )
           })}
@@ -93,7 +93,7 @@ export function EvidenceView() {
               <section key={s.id}>
                 <div className="mb-3 flex items-center gap-3">
                   <button onClick={() => setReading(s.id)} className="flex items-center gap-2 text-left text-[13px] font-semibold hover:text-ink">
-                    <SourceIcon type={s.type} /> {s.title}{s.participant && <span className="font-normal text-muted">{s.participant}</span>} <span className="font-normal text-muted">{list.length}</span>
+                    <SourceIcon type={s.type} /> {s.title}{(s.participant || s.citation) && <span className="font-normal text-muted">{s.participant || s.citation}</span>} <span className="font-normal text-muted">{list.length}</span>
                   </button>
                   <Button size="sm" variant="ghost" onClick={() => setReading(s.id)}><BookOpenText size={13} />{T.reader.open}</Button>
                   {drafts > 1 && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => confirmAllInSource(s.id)}><CheckCheck size={14} />{t.confirmAll(drafts)}</Button>}

@@ -1,4 +1,4 @@
-export type SourceType = 'interview' | 'observation' | 'pdf' | 'web' | 'text'
+export type SourceType = 'interview' | 'observation' | 'paper' | 'survey' | 'review' | 'web' | 'pdf' | 'text'
 
 /** Who produced an item, and what the researcher decided about it. */
 export type Status = 'suggested' | 'confirmed' | 'edited' | 'rejected'
@@ -8,7 +8,10 @@ export interface Source {
   id: string
   title: string
   type: SourceType
+  /** A person whose words or behaviour this is. Counts towards participant coverage. */
   participant?: string
+  /** Author, year, venue or platform. Does not count as a participant. */
+  citation?: string
   url?: string
   content: string
   addedAt: number
