@@ -1,122 +1,54 @@
-import { Copy, Crosshair, Download, Printer } from 'lucide-react'
+import { ArrowRight, ChevronDown, Copy, Crosshair, Download, Printer } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { StepGuide } from '../components/Flow'
-import { Button, Empty, SourceIcon, cx } from '../components/ui'
+import { Button, Empty, cx } from '../components/ui'
 import { locate } from '../lib/text'
 import { coverage, sourceLabel, typeSummary, useStore, useT } from '../store'
-import type { Evidence, Insight, Project, Source } from '../types'
+import type { Evidence } from '../types'
 
-type Hit = { e: Evidence; stance: 'support' | 'counter'; pos: number }
-
-/** Every piece of evidence for an insight, with its stance and relative position in its source (0–1). */
-function hitsFor(p: Project, i: Insight): Hit[] {
-  const out: Hit[] = []
-  for (const [ids, stance] of [[i.supporting, 'support'], [i.counter, 'counter']] as const) {
-    for (const id of ids) {
-      const e = p.evidence.find((x) => x.id === id)
-      const s = e && p.sources.find((x) => x.id === e.sourceId)
-      if (!e || !s) continue
-      const at = locate(s.content, e.quote)?.start ?? 0
-      out.push({ e, stance, pos: s.content.length ? at / s.content.length : 0 })
-    }
-  }
-  return out
-}
-
-/** Findings × sources: how much support and challenge each source gives each finding. */
-function EvidenceMatrix({ findings }: { findings: Insight[] }) {
-  const { project: p, go } = useStore()
-  const T = useT()
-  const t = T.exporter
-  const all = findings.map((i) => hitsFor(p, i))
-  const used = p.sources.filter((s) => all.some((h) => h.some((x) => x.e.sourceId === s.id)))
-  const jump = (i: Insight, hit?: Hit) => go({ view: 'workspace', insightId: i.id, sourceId: hit?.e.sourceId, focusEvidenceId: hit?.e.id })
-
-  return (
-    <section className="mb-6 rounded-xl border border-line bg-white p-5 print:hidden">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h2 className="text-[15px] font-semibold">{t.mapT}</h2>
-          <p className="mt-0.5 text-xs text-muted">{t.mapB}</p>
-        </div>
-        <div className="flex gap-3 text-xs text-muted">
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-mark" />{t.sup}</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-[#F7D5DC] ring-1 ring-counter/40" />{t.con}</span>
-        </div>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-auto border-separate border-spacing-1 text-[13px]">
-          <thead>
-            <tr>
-              <th className="w-[260px] min-w-[220px]" />
-              {findings.map((i, k) => (
-                <th key={i.id} scope="col" className="w-[84px] min-w-[72px] px-1 pb-1 text-center align-bottom font-medium">
-                  <button onClick={() => jump(i, all[k][0])} title={i.statement} className="rounded px-1.5 py-0.5 text-ink tabular-nums hover:bg-ink-soft">{k + 1}</button>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {used.map((s) => (
-              <tr key={s.id}>
-                <th scope="row" className="pr-2 text-left font-normal">
-                  <span className="flex items-center gap-1.5"><span className="text-muted"><SourceIcon type={s.type} size={12} /></span><span className="truncate" title={s.title}>{s.title}</span></span>
-                </th>
-                {findings.map((i, k) => {
-                  const hs = all[k].filter((h) => h.e.sourceId === s.id)
-                  const sup = hs.filter((h) => h.stance === 'support').length
-                  const con = hs.length - sup
-                  return (
-                    <td key={i.id} className="p-0">
-                      {hs.length ? (
-                        <button onClick={() => jump(i, hs[0])} title={hs.map((h) => `“${h.e.quote}”`).join('\n')}
-                          className="flex h-9 w-full items-center justify-center gap-1 rounded-md border border-line hover:border-ink">
-                          {sup > 0 && <span className="rounded bg-mark px-1.5 text-[12px] font-semibold text-[#5C4A00] tabular-nums">{sup}</span>}
-                          {con > 0 && <span className="rounded bg-[#F7D5DC] px-1.5 text-[12px] font-semibold text-counter tabular-nums">{con}</span>}
-                        </button>
-                      ) : <span className="block h-9 rounded-md bg-paper" title={t.none2} />}
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <ol className="mt-3 grid gap-x-6 gap-y-1 border-t border-line pt-3 text-xs text-muted md:grid-cols-2">
-        {findings.map((i, k) => (
-          <li key={i.id}><button onClick={() => document.getElementById(`finding-${i.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="text-left hover:text-ink">
-            <span className="mr-1.5 font-medium text-ink tabular-nums">{k + 1}</span>{i.statement}</button></li>
-        ))}
-      </ol>
-    </section>
-  )
-}
-
-/** One finding: a strip per source showing where in the text each quote sits. */
-function FindingStrips({ insight }: { insight: Insight }) {
+/** A quote that opens its surrounding passage in place, with the quote highlighted. */
+function QuoteInContext({ e, stance, insightId }: { e: Evidence; stance: 'support' | 'counter'; insightId: string }) {
   const { project: p, go } = useStore()
   const t = useT().exporter
-  const hits = hitsFor(p, insight)
-  const bySource = p.sources.map((s) => [s, hits.filter((h) => h.e.sourceId === s.id)] as [Source, Hit[]]).filter(([, h]) => h.length)
+  const [open, setOpen] = useState(false)
+  const src = p.sources.find((x) => x.id === e.sourceId)
+  const ctx = useMemo(() => {
+    if (!src) return null
+    const hit = locate(src.content, e.quote)
+    if (!hit) return null
+    const c = src.content
+    // One line before and after the quote, trimmed to a readable length.
+    let start = c.lastIndexOf('\n', hit.start - 1)
+    start = start <= 0 ? 0 : c.lastIndexOf('\n', start - 1) + 1
+    let end = c.indexOf('\n', hit.end)
+    end = end < 0 ? c.length : (c.indexOf('\n', end + 1) < 0 ? c.length : c.indexOf('\n', end + 1))
+    start = Math.max(start, hit.start - 240)
+    end = Math.min(end, hit.end + 240)
+    return { before: (start > 0 ? '…' : '') + c.slice(start, hit.start), quote: c.slice(hit.start, hit.end), after: c.slice(hit.end, end) + (end < c.length ? '…' : '') }
+  }, [src, e.quote])
+  const tone = stance === 'support' ? 'border-ink' : 'border-counter'
   return (
-    <div className="mt-3 rounded-lg bg-paper p-3 print:hidden">
-      <p className="mb-2 text-[11px] font-medium text-muted">{t.stripT}</p>
-      <ul className="space-y-1.5">
-        {bySource.map(([s, hs]) => (
-          <li key={s.id} className="flex items-center gap-3">
-            <span className="flex w-[150px] shrink-0 items-center gap-1.5 text-xs"><span className="text-muted"><SourceIcon type={s.type} size={11} /></span><span className="truncate" title={s.title}>{s.title}</span></span>
-            <span className="relative h-4 flex-1 rounded-full bg-white ring-1 ring-line">
-              {hs.map((h) => (
-                <button key={h.e.id} onClick={() => go({ view: 'workspace', insightId: insight.id, sourceId: s.id, focusEvidenceId: h.e.id })}
-                  title={`“${h.e.quote}”`} aria-label={h.e.quote}
-                  className={cx('absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white transition-transform hover:scale-125', h.stance === 'support' ? 'bg-[#E0B800]' : 'bg-counter')}
-                  style={{ left: `${Math.min(97, Math.max(3, h.pos * 100))}%` }} />
-              ))}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <li>
+      <button onClick={() => setOpen(!open)} aria-expanded={open}
+        className={cx('flex w-full items-start gap-2 border-l-2 pl-2.5 text-left text-[13px] leading-snug', tone, stance === 'support' ? 'hover:bg-ink-soft/50' : 'hover:bg-counter-soft/50')}>
+        <span className="flex-1">
+          <span className="quote">“{e.quote}”</span>
+          <span className="block text-[11px] text-muted">{sourceLabel(src)}</span>
+        </span>
+        <ChevronDown size={14} className={cx('mt-0.5 shrink-0 text-muted transition-transform print:hidden', open && 'rotate-180')} />
+      </button>
+      {open && ctx && src && (
+        <div className="mt-1.5 ml-3 rounded-md border border-line bg-paper p-3 print:hidden">
+          <p className="mb-1.5 text-[11px] text-muted">{src.title}</p>
+          <p className="quote text-[13.5px] leading-relaxed whitespace-pre-wrap text-muted">
+            {ctx.before}<mark className={stance === 'support' ? 'hl-support text-text' : 'hl-counter text-text'}>{ctx.quote}</mark>{ctx.after}
+          </p>
+          <button onClick={() => go({ view: 'workspace', insightId, sourceId: src.id, focusEvidenceId: e.id })} className="mt-2 inline-flex items-center gap-1 text-xs text-ink hover:underline">
+            {t.fullSource} <ArrowRight size={12} />
+          </button>
+        </div>
+      )}
+    </li>
   )
 }
 
@@ -179,7 +111,6 @@ export function ExportView() {
       </div>
       {!decided.length ? <Empty title={t.noneT} body={t.noneB} action={<Button variant="primary" onClick={() => go({ view: 'workspace' })}>04 {T.steps.workspace.label}</Button>} /> : (
         <>
-          <EvidenceMatrix findings={decided} />
           <article className="mx-auto max-w-[820px] rounded-xl border border-line bg-white px-10 py-10 print:max-w-none print:border-0 print:p-0">
             <p className="text-xs text-muted">{t.generated}{T.common.colon}{today}</p>
             <h1 className="mt-2 text-[26px] leading-tight font-semibold tracking-[-0.01em]">{p.name}</h1>
@@ -199,21 +130,14 @@ export function ExportView() {
                   </div>
                   <p className="mt-1.5 text-xs text-muted">{covText(i.supporting)}</p>
                   {i.decisionNote && <p className="mt-1 text-xs text-ink">{W.decisionNote}{T.common.colon}{i.decisionNote}</p>}
-                  <FindingStrips insight={i} />
                   <div className="mt-3 grid gap-4 sm:grid-cols-2">
                     <div>
                       <h4 className="mb-1.5 text-xs font-semibold text-ink">{t.support}</h4>
-                      <ul className="space-y-1.5">{ev(i.supporting).map((e) => (
-                        <li key={e.id}><button onClick={() => go({ view: 'workspace', insightId: i.id, sourceId: e.sourceId, focusEvidenceId: e.id })} className="block w-full border-l-2 border-ink pl-2.5 text-left text-[13px] leading-snug hover:bg-ink-soft/50">
-                          <span className="quote">“{e.quote}”</span><span className="block text-[11px] text-muted">{who(e)}</span></button></li>
-                      ))}</ul>
+                      <ul className="space-y-1.5">{ev(i.supporting).map((e) => <QuoteInContext key={e.id} e={e} stance="support" insightId={i.id} />)}</ul>
                     </div>
                     <div>
                       <h4 className="mb-1.5 text-xs font-semibold text-counter">{t.counter}</h4>
-                      {i.counter.length ? <ul className="space-y-1.5">{ev(i.counter).map((e) => (
-                        <li key={e.id}><button onClick={() => go({ view: 'workspace', insightId: i.id, sourceId: e.sourceId, focusEvidenceId: e.id })} className="block w-full border-l-2 border-counter pl-2.5 text-left text-[13px] leading-snug hover:bg-counter-soft/50">
-                          <span className="quote">“{e.quote}”</span><span className="block text-[11px] text-muted">{who(e)}</span></button></li>
-                      ))}</ul> : <p className="text-[13px] text-muted">{t.none}</p>}
+                      {i.counter.length ? <ul className="space-y-1.5">{ev(i.counter).map((e) => <QuoteInContext key={e.id} e={e} stance="counter" insightId={i.id} />)}</ul> : <p className="text-[13px] text-muted">{t.none}</p>}
                     </div>
                   </div>
                 </li>
